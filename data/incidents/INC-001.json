@@ -1,0 +1,9 @@
+{
+  "id": "INC-001",
+  "title": "Checkout payment failure spike",
+  "description": "Checkout payment failures increased significantly beginning around 14:10 UTC.",
+  "service": "payment-service",
+  "severity": "critical",
+  "status": "open",
+  "incident_start": "2026-09-18T14:10:00Z"
+}

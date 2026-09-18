@@ -1,0 +1,17 @@
+{
+  "incident_id": "INC-001",
+  "root_cause": "Database connection leak introduced by payment-service version 2.4.0",
+  "root_cause_category": "application_regression",
+  "causal_service": "payment-service",
+  "causal_deployment": "DEP-1001",
+  "expected_evidence": [
+    "payment-service 2.4.0 deployment occurred shortly before degradation",
+    "database connection utilization increased rapidly after deployment",
+    "DBConnectionPoolExhausted errors occurred before payment failures",
+    "checkout failures followed payment-service database failures"
+  ],
+  "distractors": [
+    "inventory-service latency warning",
+    "inventory-service deployment"
+  ]
+}
