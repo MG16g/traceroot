@@ -24,4 +24,4 @@ class Incident(BaseModel):
     service: str
     severity: IncidentSeverity
     status: IncidentStatus=IncidentStatus.OPEN
-    created_at: datetime = Field(default_factory=lambda:datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow)

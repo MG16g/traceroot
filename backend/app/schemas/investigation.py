@@ -1,5 +1,7 @@
 from enum import Enum
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from app.schemas.evidence import Evidence
@@ -12,6 +14,18 @@ class InvestigationStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+class InvestigationAction(str, Enum):
+    SEARCH_LOGS = "search_logs"
+    QUERY_METRICS = "query_mertics"
+    GET_DEPLOYMENTS = "get_deployments"
+    STOP = "stop"
+
+class InvestigationDecision(BaseModel):
+    action: InvestigationAction
+    reason: str
+    parameters: dict[str, Any] = Field(default_factory=dict)
+
+
 
 class InvestigationState(BaseModel):
     incident: Incident
@@ -23,5 +37,9 @@ class InvestigationState(BaseModel):
     iteration: int = Field(default=0, ge=0)
 
     status: InvestigationStatus = InvestigationStatus.PENDING
+
+    current_decision: InvestigationDecision | None = None
+
+    error: str | None = None
 
     final_report: str | None = None
