@@ -1,21 +1,22 @@
 import os
 
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 
 
 load_dotenv()
 
 
 def get_llm():
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
 
     if not api_key:
-        raise RuntimeError(
-            "GEMINI_API_KEY is not configured."
+        raise ValueError(
+            "GROQ_API_KEY is not configured."
         )
 
-    return ChatGoogleGenerativeAI(
-        model="gemini-3.6-flash",
-        google_api_key=api_key,
+    return ChatGroq(
+        api_key=api_key,
+        model="openai/gpt-oss-20b",
+        temperature=0,
     )

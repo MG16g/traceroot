@@ -16,7 +16,7 @@ class InvestigationStatus(str, Enum):
 
 class InvestigationAction(str, Enum):
     SEARCH_LOGS = "search_logs"
-    QUERY_METRICS = "query_mertics"
+    QUERY_METRICS = "query_metrics"
     GET_DEPLOYMENTS = "get_deployments"
     STOP = "stop"
 
@@ -39,6 +39,8 @@ class InvestigationState(BaseModel):
     status: InvestigationStatus = InvestigationStatus.PENDING
 
     current_decision: InvestigationDecision | None = None
+
+    executed_actions: list[str] = Field(default_factory=list)
 
     error: str | None = None
 

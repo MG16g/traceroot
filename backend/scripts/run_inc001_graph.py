@@ -1,4 +1,6 @@
-from app.orchestration.investigation_graph import build_investigation_graph
+from app.orchestration.investigation_graph import (
+    build_investigation_graph,
+)
 
 from app.schemas.incident import (
     Incident,
@@ -23,40 +25,81 @@ def main():
 
     graph = build_investigation_graph()
 
+    print("\n===================================")
+    print("TraceRoot Day 5 Investigation")
+    print("===================================\n")
+
     result = graph.invoke(initial_state)
 
-    print("\n===================================")
-    print("TraceRoot Day 4 Investigation")
-    print("===================================")
-
-    decision = result["current_decision"]
-
-    print("\nDecision")
+    print("Investigation Summary")
     print("-----------------------------------")
-    print("Action:", decision.action)
-    print("Reason:", decision.reason)
-    print("Parameters:", decision.parameters)
+    print(f"Iterations: {result['iteration']}")
+    print(f"Current step: {result['current_step']}")
+    print(f"Evidence count: {len(result['evidence'])}")
+    print(
+        f"Executed actions: "
+        f"{len(result['executed_actions'])}"
+    )
 
-    print("\nGraph State")
+    print("\nExecuted Actions")
     print("-----------------------------------")
-    print("Current step:", result["current_step"])
-    print("Error:", result.get("error"))
 
-    evidence = result["evidence"]
+    for action in result["executed_actions"]:
+        print(f"- {action}")
 
     print("\nEvidence Collected")
     print("-----------------------------------")
-    print("Count:", len(evidence))
 
-    for index, item in enumerate(evidence, start=1):
+    for index, evidence in enumerate(
+        result["evidence"],
+        start=1,
+    ):
         print(f"\nEvidence #{index}")
-        print("Source:", item.source_type)
-        print("Service:", item.service)
-        print("Content:", item.content)
+        print(f"Source: {evidence.source_type}")
+        print(f"Service: {evidence.service}")
+        print(f"Content: {evidence.content}")
+        print(
+            f"Relevance: "
+            f"{evidence.relevance_score}"
+        )
+
+    print("\nCurrent Hypothesis")
+    print("-----------------------------------")
+
+    if result["hypotheses"]:
+        hypothesis = result["hypotheses"][0]
+
+        print(f"Description: {hypothesis.description}")
+        print(f"Confidence: {hypothesis.confidence}")
+        print(f"Status: {hypothesis.status}")
+
+        print("\nSupporting Evidence:")
+
+        for item in hypothesis.supporting_evidence:
+            print(f"- {item}")
+
+        print("\nContradicting Evidence:")
+
+        if hypothesis.contradicting_evidence:
+            for item in hypothesis.contradicting_evidence:
+                print(f"- {item}")
+        else:
+            print("- None")
+    else:
+        print("No hypothesis generated.")
+
+    print("\n===================================")
+    print("FINAL RCA REPORT")
+    print("===================================\n")
+
+    if result["final_report"]:
+        print(result["final_report"])
+    else:
+        print("No final report generated.")
 
     print("\n===================================")
     print("Investigation finished")
-    print("===================================")
+    print("===================================\n")
 
 
 if __name__ == "__main__":
