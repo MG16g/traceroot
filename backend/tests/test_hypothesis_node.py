@@ -43,7 +43,7 @@ class FakeHypothesisLLM:
 
 
 class FakeLLM:
-    def with_structured_output(self, schema):
+    def with_structured_output(self, schema, **kwargs):
         assert schema is HypothesisProposal
         return FakeHypothesisLLM()
 

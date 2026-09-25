@@ -33,6 +33,10 @@ class InvestigationState(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
     hypotheses: list[Hypothesis] = Field(default_factory=list)
 
+    investigation_notes: list[str] = Field(
+        default_factory=list
+    )
+
     current_step: str = "triage"
     iteration: int = Field(default=0, ge=0)
 

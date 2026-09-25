@@ -10,44 +10,46 @@ def main():
     llm = get_llm()
 
     structured_llm = llm.with_structured_output(
-        InvestigationDecision
+        InvestigationDecision,
+        method="json_mode",
     )
 
     prompt = """
-You are an SRE investigation planner.
+You are the investigation planner for TraceRoot.
 
-An incident occurred in payment-service:
-checkout payment failures increased immediately
-after a deployment.
+Incident:
+Checkout payment failures increased after a deployment.
 
-Choose exactly one next investigation action.
+Service:
+payment-service
 
-Available actions and allowed parameters:
+Available investigation actions:
+- search_logs
+- query_metrics
+- get_deployments
+- stop
 
-search_logs:
-- service
-- level
-- query
+Choose the single most appropriate next investigation action.
 
-query_metrics:
-- service
-- metric
-- start_time
-- end_time
+Return ONLY a valid JSON object with this structure:
 
-get_deployments:
-- service
-- status
-- start_time
-- end_time
+{
+    "action": "search_logs",
+    "reason": "brief explanation",
+    "parameters": {
+        "service": "payment-service"
+    }
+}
 
-stop:
-- no parameters
+The action must be one of:
+- search_logs
+- query_metrics
+- get_deployments
+- stop
 
-Do not invent parameter names.
-Only use parameters listed for the selected action.
-
-Return the most appropriate investigation decision.
+Do not include markdown.
+Do not include code fences.
+Do not include text outside the JSON object.
 """
 
     decision = structured_llm.invoke(prompt)

@@ -5,6 +5,7 @@ from app.orchestration.investigation_graph import (
         build_action_fingerprint, 
         format_evidence_for_planner,
         format_hypotheses_for_planner,
+        format_investigation_notes,
         plan_next_action,
         route_action,
     )
@@ -41,7 +42,7 @@ class FakeStructuredLLM:
 
 
 class FakeLLM:
-    def with_structured_output(self, schema):
+    def with_structured_output(self, schema, **kwargs):
         assert schema is InvestigationDecision
         return FakeStructuredLLM()
 
@@ -268,5 +269,97 @@ def test_format_hypotheses_for_planner_with_hypothesis():
 
     assert (
         "Deployment completed successfully"
+        in result
+    )
+
+
+def test_planner_includes_investigation_notes():
+    incident = Incident(
+        id="INC-001",
+        title="Checkout payment failures",
+        description="Payment failures increased after deployment",
+        service="payment-service",
+        severity=IncidentSeverity.CRITICAL,
+    )
+
+    state = InvestigationState(
+        incident=incident,
+        investigation_notes=[
+            (
+                "Investigation action returned no results: "
+                "search_logs|level=ERROR,"
+                "query=checkout,"
+                "service=payment-service"
+            )
+        ],
+    )
+
+    captured = {}
+
+    class CapturingStructuredLLM:
+        def invoke(self, prompt):
+            captured["prompt"] = prompt
+
+            return InvestigationDecision(
+                action=InvestigationAction.QUERY_METRICS,
+                reason="Investigate payment error rate",
+                parameters={
+                    "service": "payment-service",
+                    "metric": "payment_error_rate",
+                },
+            )
+
+    class CapturingLLM:
+        def with_structured_output(self, schema, **kwargs):
+            return CapturingStructuredLLM()
+
+    with patch(
+        "app.orchestration.investigation_graph.get_llm",
+        return_value=CapturingLLM(),
+    ), patch(
+        "app.orchestration.investigation_graph.get_telemetry_catalog",
+        return_value={
+            "services": ["payment-service"],
+            "log_levels": ["ERROR"],
+            "metrics": ["payment_error_rate"],
+            "deployment_statuses": ["success"],
+        },
+    ):
+        result = plan_next_action(state)
+
+    prompt = captured["prompt"]
+
+    assert "Previous investigation notes" in prompt
+
+    assert (
+        "search_logs|level=ERROR"
+        in prompt
+    )
+
+    assert "query=checkout" in prompt
+
+    assert (
+        result["current_decision"].action
+        == InvestigationAction.QUERY_METRICS
+    )
+
+
+def test_format_investigation_notes():
+    notes = [
+        "First investigation returned no results.",
+        "Second investigation returned no results.",
+    ]
+
+    result = format_investigation_notes(
+        notes
+    )
+
+    assert (
+        "First investigation returned no results."
+        in result
+    )
+
+    assert (
+        "Second investigation returned no results."
         in result
     )

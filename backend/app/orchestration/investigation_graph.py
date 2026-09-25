@@ -21,6 +21,11 @@ from app.schemas.hypothesis import (
     HypothesisStatus,
 )
 
+from app.tools.telemetry_catalog import (
+    get_telemetry_catalog,
+    format_telemetry_catalog,
+)
+
 from app.tools.log_tool import search_logs
 from app.tools.metric_tool import query_metrics
 from app.tools.deployment_tool import get_deployments
@@ -99,10 +104,13 @@ def build_investigation_graph():
         },
     )
 
-    # Tool -> hypothesis analysis
-    builder.add_edge(
+    builder.add_conditional_edges(
         "execute_action",
-        "update_hypothesis",
+        route_after_action,
+        {
+            "plan_next_action": "plan_next_action",
+            "update_hypothesis": "update_hypothesis",
+        },
     )
 
     # Hypothesis -> continue investigation OR report
@@ -145,6 +153,23 @@ def plan_next_action(
         state.hypotheses
     )
 
+    telemetry_catalog = get_telemetry_catalog(
+    state.incident.id
+    )
+
+    telemetry_context = format_telemetry_catalog(
+        telemetry_catalog
+    )
+
+
+    notes_context = format_investigation_notes(
+        state.investigation_notes
+    )
+
+    executed_actions_context = format_executed_actions(
+        state.executed_actions
+    )
+
     prompt = f"""
 You are the investigation planner for TraceRoot.
 
@@ -165,6 +190,69 @@ Evidence collected so far:
 
 Current hypotheses:
 {hypothesis_context}
+
+Telemetry available for this incident:
+{telemetry_context}
+
+Previous investigation notes:
+{notes_context}
+
+If a previous action returned no results, do not repeat
+the same action with identical parameters.
+
+Use the empty result as investigation feedback.
+
+Consider broadening the query, removing an unnecessary
+filter, or investigating another telemetry source.
+
+Investigation strategy:
+
+- Use the telemetry catalog when selecting parameter values.
+- Do not invent service names, metric names, log levels,
+  or deployment statuses.
+- Prefer evidence sources that have not yet been investigated.
+- If an action returned no results, do not repeat the exact
+  same action and parameters.
+- Treat an empty result as useful investigation feedback.
+- When a filtered query returns no results, consider removing
+  an optional filter or using a broader valid query.
+- Do not repeatedly change arbitrary filters on the same tool
+  when another telemetry source remains unexplored.
+- Prefer gathering evidence from multiple source types:
+  deployments, logs, and metrics.
+- Stop only when further investigation is unnecessary.
+
+
+Investigation actions already executed:
+{executed_actions_context}
+
+IMPORTANT:
+Do not select an action with the same parameters as any
+action listed above.
+
+After collecting useful evidence from one telemetry source,
+prefer investigating a different telemetry source.
+
+For example, if logs already provide evidence, consider
+metrics or deployments next.
+
+Try to gather evidence from multiple independent telemetry
+source types before stopping.
+
+Return only a JSON object matching this structure:
+
+{{
+  "action": "search_logs | query_metrics | get_deployments | stop",
+  "reason": "brief explanation",
+  "parameters": {{}}
+}}
+
+Do not include markdown.
+Do not include code fences.
+Do not include commentary outside the JSON object.
+
+Do not include optional parameters with empty string values.
+Omit an optional parameter when it is not needed.
 
 Available actions and allowed parameters:
 
@@ -197,18 +285,20 @@ Avoid repeating an investigation that has already
 been performed.
 
 Do not invent parameter names.
-Only use parameters listed for the selected action. """
+Only use parameters listed for the selected action. 
+"""
 
     llm = get_llm()
 
     # IMPORTANT:
     # structured output FIRST, retry SECOND
     structured_llm = llm.with_structured_output(
-        InvestigationDecision
+        InvestigationDecision,
+        method="json_mode",
     )
 
     retrying_llm = with_llm_retry(
-        structured_llm
+        structured_llm,
     )
 
     decision = retrying_llm.invoke(
@@ -318,6 +408,30 @@ def execute_action(
     action_fingerprint = build_action_fingerprint(
         decision
     )
+
+    if not results:
+        action_fingerprint = build_action_fingerprint(
+            decision
+        )
+
+        note = (
+            f"Investigation action returned no results: "
+            f"{action_fingerprint}"
+        )
+
+        return {
+            "evidence": state.evidence,
+            "executed_actions": (
+                state.executed_actions
+                + [action_fingerprint]
+            ),
+            "investigation_notes": (
+                state.investigation_notes
+                + [note]
+            ),
+            "current_step": "no_results",
+            "error": None,
+        }
 
     return {
         "evidence": (
@@ -488,13 +602,58 @@ or challenges the hypothesis.
 Confidence must be between 0 and 1.
 
 Do not generate IDs or incident metadata.
+Return only a valid JSON object matching this exact structure:
+
+{{
+    "description": "A concise evidence-backed hypothesis",
+    "supporting_evidence": [
+        "Evidence #1",
+        "Evidence #2"
+    ],
+    "contradicting_evidence": [
+        "Evidence #3"
+    ],
+    "confidence": 0.75
+}}
+
+IMPORTANT JSON requirements:
+
+- supporting_evidence must be a JSON array of strings.
+- contradicting_evidence must be a JSON array of strings.
+- Every evidence reference must use the exact string format
+  "Evidence #N".
+- Never return evidence references as integers.
+- Correct: ["Evidence #1", "Evidence #2"]
+- Incorrect: [1, 2]
+- Only reference evidence actually supplied above.
+- If there is no supporting evidence, return [].
+- If there is no contradicting evidence, return [].
+- confidence must be a number between 0.0 and 1.0.
+- Do not include markdown.
+- Do not include code fences.
+- Do not include commentary outside the JSON object.
+
+Do not infer facts that are not present in the supplied evidence.
+
+A statement from the incident description is context, not automatically
+confirmed evidence.
+
+For example, if the incident description says failures increased after
+a deployment but no deployment evidence has been collected yet, you may
+describe the deployment as a possible factor, but you must not state
+that the deployment caused the failure.
+
+Base supporting_evidence only on the evidence records supplied above.
+
+Distinguish correlation from causation.
 """
 
     llm = get_llm()
 
     # Structured output FIRST
     structured_llm = llm.with_structured_output(
-        HypothesisProposal
+        HypothesisProposal,
+        method="json_mode",
     )
 
     # Retry wrapper SECOND
@@ -698,3 +857,36 @@ Clearly distinguish between confirmed facts and hypotheses.
         "final_report": report,
         "current_step": "completed",
     }
+
+
+def route_after_action(
+    state: InvestigationState,
+) -> str:
+    if state.current_step == "no_results":
+        return "plan_next_action"
+
+    return "update_hypothesis"
+
+
+def format_investigation_notes(
+    notes: list[str],
+) -> str:
+    if not notes:
+        return "No investigation notes yet."
+
+    return "\n".join(
+        f"- {note}"
+        for note in notes
+    )
+
+
+def format_executed_actions(
+    actions: list[str],
+) -> str:
+    if not actions:
+        return "No investigation actions have been executed yet."
+
+    return "\n".join(
+        f"- {action}"
+        for action in actions
+    )

@@ -26,7 +26,7 @@ def main():
     graph = build_investigation_graph()
 
     print("\n===================================")
-    print("TraceRoot Day 5 Investigation")
+    print("TraceRoot Day 6 Investigation")
     print("===================================\n")
 
     result = graph.invoke(initial_state)

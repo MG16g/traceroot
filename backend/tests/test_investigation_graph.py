@@ -259,7 +259,7 @@ def test_investigation_graph_stops_without_tool_execution():
 
 
     class StopLLM:
-        def with_structured_output(self, schema):
+        def with_structured_output(self, schema, **kwargs):
             return StopStructuredLLM()
 
         def invoke(self, prompt):
@@ -404,7 +404,7 @@ class FakeLLM:
         self.decision_llm = SequentialDecisionLLM()
         self.hypothesis_llm = FakeHypothesisLLM()
 
-    def with_structured_output(self, schema):
+    def with_structured_output(self, schema, **kwargs):
         if schema is InvestigationDecision:
             return self.decision_llm
 
