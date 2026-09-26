@@ -26,7 +26,7 @@ def main():
     graph = build_investigation_graph()
 
     print("\n===================================")
-    print("TraceRoot Day 6 Investigation")
+    print("TraceRoot Day 7 Investigation")
     print("===================================\n")
 
     result = graph.invoke(initial_state)
@@ -101,6 +101,48 @@ def main():
     print("Investigation finished")
     print("===================================\n")
 
+    print()
+    print("Deterministic Root Cause Evaluation")
+    print("-----------------------------------")
+    
+    candidate = result.get("root_cause_candidate")
+    
+    if candidate is None:
+        print("No root cause candidate established.")
+    
+    else:
+        print(f"Description: {candidate.description}")
+        print(f"Confidence: {candidate.confidence:.2f}")
+        print(f"Status: {candidate.status}")
+        print()
+    
+        print("Supporting Evidence:")
+        if candidate.supporting_evidence:
+            for evidence_ref in candidate.supporting_evidence:
+                print(f"- {evidence_ref}")
+        else:
+            print("- None")
+    
+        print()
+    
+        print("Contradicting Evidence:")
+        if candidate.contradicting_evidence:
+            for evidence_ref in candidate.contradicting_evidence:
+                print(f"- {evidence_ref}")
+        else:
+            print("- None")
+    
+        print()
+    
+        print("Source Types:")
+        if candidate.source_types:
+            for source_type in candidate.source_types:
+                print(f"- {source_type}")
+        else:
+            print("- None")
+
 
 if __name__ == "__main__":
     main()
+
+    

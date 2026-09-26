@@ -29,6 +29,8 @@ from app.tools.telemetry_catalog import (
 from app.tools.log_tool import search_logs
 from app.tools.metric_tool import query_metrics
 from app.tools.deployment_tool import get_deployments
+from app.services.rca_evaluator import evaluate_hypothesis
+from app.schemas.root_cause import RootCauseStatus
 
 
 MAX_ITERATIONS = 5
@@ -83,6 +85,11 @@ def build_investigation_graph():
     )
 
     builder.add_node(
+        "evaluate_root_cause",
+        evaluate_root_cause,
+    )
+
+    builder.add_node(
         "generate_final_report",
         generate_final_report,
     )
@@ -114,8 +121,13 @@ def build_investigation_graph():
     )
 
     # Hypothesis -> continue investigation OR report
-    builder.add_conditional_edges(
+    builder.add_edge(
         "update_hypothesis",
+        "evaluate_root_cause",
+    )
+
+    builder.add_conditional_edges(
+        "evaluate_root_cause",
         route_after_hypothesis,
         {
             "continue": "plan_next_action",
@@ -734,37 +746,30 @@ Contradicting evidence:
 def has_sufficient_evidence(
     state: InvestigationState,
 ) -> bool:
+    candidate = state.root_cause_candidate
 
-    # Need a hypothesis first
-    if not state.hypotheses:
+    if candidate is None:
         return False
 
-    # Need at least three evidence items
+    # Require enough total telemetry before allowing
+    # the autonomous investigation to terminate.
     if len(state.evidence) < 3:
         return False
 
-    # Need multiple evidence source types
-    source_types = {
-        evidence.source_type
-        for evidence in state.evidence
-    }
-
-    if len(source_types) < 2:
+    # Require evidence from at least two independent
+    # telemetry source types.
+    if len(candidate.source_types) < 2:
         return False
 
-    current_hypothesis = (
-        state.hypotheses[0]
-    )
+    # Confidence is now calculated by TraceRoot's
+    # deterministic RCA evaluator.
+    if candidate.confidence < 0.70:
+        return False
 
-    # Confidence threshold
-    if (
-        current_hypothesis.confidence
-        < 0.70
-    ):
+    if candidate.status != RootCauseStatus.SUPPORTED:
         return False
 
     return True
-
 
 # ============================================================
 # POST-HYPOTHESIS ROUTING
@@ -797,15 +802,25 @@ def generate_final_report(
         state.hypotheses
     )
 
+    root_cause_context = format_root_cause_for_report(
+        state
+    )
+
+    llm = get_llm()
+
     prompt = f"""
 You are the final RCA report writer for TraceRoot.
 
 Generate a concise Site Reliability Engineering incident
 investigation report using only the supplied incident,
-evidence, and hypotheses.
+evidence, hypotheses, and deterministic root cause evaluation.
 
-Do not invent evidence or claim certainty that is not
-supported by the investigation.
+Do not invent evidence.
+
+Do not increase or override the deterministic confidence score.
+
+The deterministic root cause evaluation is authoritative
+for RCA confidence and RCA status.
 
 Incident:
 {state.incident.model_dump_json(indent=2)}
@@ -813,8 +828,11 @@ Incident:
 Evidence:
 {evidence_context}
 
-Current hypotheses:
+LLM-generated investigation hypotheses:
 {hypothesis_context}
+
+TraceRoot deterministic root cause evaluation:
+{root_cause_context}
 
 Write the report with these sections:
 
@@ -832,23 +850,20 @@ Write the report with these sections:
 
 # Recommended Next Steps
 
-Clearly distinguish between confirmed facts and hypotheses.
+Rules:
+
+- Clearly distinguish confirmed observations from hypotheses.
+- Use the deterministic root cause confidence in the
+  Confidence section when a root cause candidate exists.
+- Do not substitute the LLM hypothesis confidence for the
+  deterministic confidence.
+- State when the root cause remains under investigation.
+- Do not claim causation beyond the available evidence.
 """
 
-    llm = get_llm()
+    response = llm.invoke(prompt)
 
-    retrying_llm = with_llm_retry(
-        llm
-    )
-
-    response = retrying_llm.invoke(
-        prompt
-    )
-
-    if hasattr(
-        response,
-        "content",
-    ):
+    if hasattr(response, "content"):
         report = response.content
     else:
         report = str(response)
@@ -857,7 +872,6 @@ Clearly distinguish between confirmed facts and hypotheses.
         "final_report": report,
         "current_step": "completed",
     }
-
 
 def route_after_action(
     state: InvestigationState,
@@ -890,3 +904,56 @@ def format_executed_actions(
         f"- {action}"
         for action in actions
     )
+
+
+def evaluate_root_cause(
+    state: InvestigationState,
+):
+    if not state.hypotheses:
+        return {
+            "root_cause_candidate": None,
+            "current_step": "no_root_cause_candidate",
+        }
+
+    hypothesis = state.hypotheses[0]
+
+    candidate = evaluate_hypothesis(
+        hypothesis=hypothesis,
+        evidence_items=state.evidence,
+    )
+
+    return {
+        "root_cause_candidate": candidate,
+        "current_step": "root_cause_evaluated",
+    }
+
+def format_root_cause_for_report(
+    state: InvestigationState,
+) -> str:
+    candidate = state.root_cause_candidate
+
+    if candidate is None:
+        return (
+            "No deterministic root cause candidate "
+            "was established."
+        )
+
+    return f"""
+Root Cause Description:
+{candidate.description}
+
+Deterministic Confidence:
+{candidate.confidence:.2f}
+
+Evaluation Status:
+{candidate.status.value}
+
+Supporting Evidence References:
+{candidate.supporting_evidence}
+
+Contradicting Evidence References:
+{candidate.contradicting_evidence}
+
+Supporting Source Types:
+{candidate.source_types}
+""".strip()

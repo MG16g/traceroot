@@ -19,6 +19,11 @@ from app.schemas.hypothesis import (
     HypothesisStatus,
 )
 
+from app.schemas.root_cause import (
+    RootCauseCandidate,
+    RootCauseStatus,
+)
+
 from app.schemas.investigation import InvestigationState
 
 
@@ -124,4 +129,96 @@ def test_generate_final_report():
     assert (
         "Recommended Next Steps"
         in result["final_report"]
+    )
+
+
+def test_final_report_uses_deterministic_root_cause():
+    incident = Incident(
+        id="INC-001",
+        title="Checkout payment failures",
+        description=(
+            "Payment failures increased after deployment"
+        ),
+        service="payment-service",
+        severity=IncidentSeverity.CRITICAL,
+    )
+
+    hypothesis = Hypothesis(
+        id="HYP-001",
+        incident_id="INC-001",
+        description=(
+            "Database connection pool exhaustion "
+            "caused payment failures"
+        ),
+        supporting_evidence=[
+            "Evidence #1",
+            "Evidence #2",
+        ],
+        contradicting_evidence=[],
+
+        # Intentionally different.
+        confidence=0.99,
+        status=HypothesisStatus.INVESTIGATING,
+    )
+
+    candidate = RootCauseCandidate(
+        hypothesis_id="HYP-001",
+        incident_id="INC-001",
+        description=(
+            "Database connection pool exhaustion "
+            "caused payment failures"
+        ),
+        supporting_evidence=[
+            "Evidence #1",
+            "Evidence #2",
+        ],
+        contradicting_evidence=[],
+        source_types=[
+            "log",
+            "metric",
+        ],
+
+        # TraceRoot's authoritative score.
+        confidence=0.70,
+        status=RootCauseStatus.SUPPORTED,
+    )
+
+    state = InvestigationState(
+        incident=incident,
+        hypotheses=[hypothesis],
+        root_cause_candidate=candidate,
+    )
+
+    class CapturingResponse:
+        content = "Generated RCA report"
+
+    class CapturingLLM:
+        def __init__(self):
+            self.prompt = None
+
+        def invoke(self, prompt):
+            self.prompt = prompt
+            return CapturingResponse()
+
+    fake_llm = CapturingLLM()
+
+    with patch(
+        "app.orchestration.investigation_graph.get_llm",
+        return_value=fake_llm,
+    ):
+        result = generate_final_report(state)
+
+    assert result["final_report"] == "Generated RCA report"
+
+    assert result["current_step"] == "completed"
+
+    assert "Deterministic Confidence:" in fake_llm.prompt
+    assert "0.70" in fake_llm.prompt
+
+    assert "Evaluation Status:" in fake_llm.prompt
+    assert "supported" in fake_llm.prompt
+
+    assert (
+        "The deterministic root cause evaluation is authoritative"
+        in fake_llm.prompt
     )

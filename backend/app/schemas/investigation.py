@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from app.schemas.evidence import Evidence
 from app.schemas.hypothesis import Hypothesis
 from app.schemas.incident import Incident
+from app.schemas.root_cause import RootCauseCandidate
 
 class InvestigationStatus(str, Enum):
     PENDING = "pending"
@@ -43,6 +44,8 @@ class InvestigationState(BaseModel):
     status: InvestigationStatus = InvestigationStatus.PENDING
 
     current_decision: InvestigationDecision | None = None
+
+    root_cause_candidate: RootCauseCandidate | None = None
 
     executed_actions: list[str] = Field(default_factory=list)
 
