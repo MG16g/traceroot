@@ -418,3 +418,309 @@ def test_get_latest_investigation_not_found():
             "incident INC-404"
         )
     )
+
+# -------------------------------------------------------------------
+# GET /api/investigations/stream/{incident_id}
+# -------------------------------------------------------------------
+
+
+def create_fake_stream_states():
+    """
+    Creates deterministic accumulated graph states for
+    testing the SSE investigation endpoint without calling
+    the real LangGraph/LLM pipeline.
+    """
+
+    fake_response = create_fake_investigation_response()
+
+    return [
+        {
+            "current_step": "triage",
+            "iteration": 0,
+        },
+        {
+            "current_step": "action_selected",
+            "iteration": 1,
+        },
+        {
+            "current_step": "evidence_collected",
+            "iteration": 1,
+        },
+        {
+            "current_step": "hypothesis_updated",
+            "iteration": 1,
+        },
+        {
+            "current_step": "root_cause_evaluated",
+            "iteration": 1,
+        },
+        {
+            "current_step": "completed",
+            "iteration": 2,
+            "_fake_response": fake_response,
+        },
+    ]
+
+
+def test_stream_investigation_incident_not_found():
+    """
+    Streaming endpoint should return HTTP 404 when the
+    requested incident does not exist.
+    """
+
+    with patch(
+        "app.api.investigations."
+        "IncidentRepository.get_by_id",
+        return_value=None,
+    ), patch(
+        "app.api.investigations.stream_investigation",
+    ) as mock_stream:
+
+        response = client.get(
+            "/api/investigations/stream/INC-404"
+        )
+
+    assert response.status_code == 404
+
+    assert (
+        response.json()["detail"]
+        == "Incident INC-404 not found"
+    )
+
+    mock_stream.assert_not_called()
+
+
+def test_stream_investigation_returns_sse():
+    """
+    A valid streaming investigation should return an
+    SSE response.
+    """
+
+    fake_incident_model = create_fake_incident_model()
+
+    final_response = (
+        create_fake_investigation_response()
+    )
+
+    stream_states = create_fake_stream_states()
+
+    with patch(
+        "app.api.investigations."
+        "IncidentRepository.get_by_id",
+        return_value=fake_incident_model,
+    ), patch(
+        "app.api.investigations.stream_investigation",
+        return_value=iter(stream_states),
+    ), patch(
+        "app.api.investigations."
+        "build_investigation_response",
+        return_value=final_response,
+    ), patch(
+        "app.api.investigations.persist_investigation",
+    ):
+
+        response = client.get(
+            "/api/investigations/stream/INC-001"
+        )
+
+    assert response.status_code == 200
+
+    assert (
+        "text/event-stream"
+        in response.headers["content-type"]
+    )
+
+
+def test_stream_investigation_emits_progress():
+    """
+    Streaming endpoint should emit started and progress
+    events while the graph executes.
+    """
+
+    fake_incident_model = create_fake_incident_model()
+
+    final_response = (
+        create_fake_investigation_response()
+    )
+
+    stream_states = create_fake_stream_states()
+
+    with patch(
+        "app.api.investigations."
+        "IncidentRepository.get_by_id",
+        return_value=fake_incident_model,
+    ), patch(
+        "app.api.investigations.stream_investigation",
+        return_value=iter(stream_states),
+    ), patch(
+        "app.api.investigations."
+        "build_investigation_response",
+        return_value=final_response,
+    ), patch(
+        "app.api.investigations.persist_investigation",
+    ):
+
+        response = client.get(
+            "/api/investigations/stream/INC-001"
+        )
+
+    body = response.text
+
+    assert "event: started" in body
+    assert "event: progress" in body
+
+    assert '"step": "action_selected"' in body
+    assert '"step": "evidence_collected"' in body
+    assert '"step": "hypothesis_updated"' in body
+
+    assert (
+        '"step": "root_cause_evaluated"'
+        in body
+    )
+
+
+def test_stream_investigation_emits_completed_response():
+    """
+    Successful stream should finish with a completed
+    event containing the public InvestigationResponse.
+    """
+
+    fake_incident_model = create_fake_incident_model()
+
+    final_response = (
+        create_fake_investigation_response()
+    )
+
+    stream_states = create_fake_stream_states()
+
+    with patch(
+        "app.api.investigations."
+        "IncidentRepository.get_by_id",
+        return_value=fake_incident_model,
+    ), patch(
+        "app.api.investigations.stream_investigation",
+        return_value=iter(stream_states),
+    ), patch(
+        "app.api.investigations."
+        "build_investigation_response",
+        return_value=final_response,
+    ), patch(
+        "app.api.investigations.persist_investigation",
+    ):
+
+        response = client.get(
+            "/api/investigations/stream/INC-001"
+        )
+
+    body = response.text
+
+    assert "event: completed" in body
+
+    assert '"incident_id": "INC-001"' in body
+    assert '"status": "completed"' in body
+    assert '"confidence": 0.9' in body
+
+    assert "Incident Summary" in body
+
+
+def test_stream_investigation_persists_once():
+    """
+    Successful streamed investigation should persist the
+    final response exactly once.
+    """
+
+    fake_incident_model = create_fake_incident_model()
+
+    final_response = (
+        create_fake_investigation_response()
+    )
+
+    stream_states = create_fake_stream_states()
+
+    with patch(
+        "app.api.investigations."
+        "IncidentRepository.get_by_id",
+        return_value=fake_incident_model,
+    ), patch(
+        "app.api.investigations.stream_investigation",
+        return_value=iter(stream_states),
+    ), patch(
+        "app.api.investigations."
+        "build_investigation_response",
+        return_value=final_response,
+    ), patch(
+        "app.api.investigations.persist_investigation",
+    ) as mock_persist:
+
+        response = client.get(
+            "/api/investigations/stream/INC-001"
+        )
+
+    assert response.status_code == 200
+
+    mock_persist.assert_called_once()
+
+    call = mock_persist.call_args
+
+    assert call.kwargs["db"] is fake_db
+
+    assert (
+        call.kwargs["response"]
+        == final_response
+    )
+
+
+def test_stream_investigation_emits_investigation_error():
+    """
+    If graph execution fails after the SSE connection
+    starts, the API should emit investigation_error and
+    must not persist a result.
+    """
+
+    fake_incident_model = create_fake_incident_model()
+
+    def failing_stream(_incident):
+        yield {
+            "current_step": "action_selected",
+            "iteration": 1,
+        }
+
+        raise RuntimeError(
+            "Simulated investigation failure"
+        )
+
+    with patch(
+        "app.api.investigations."
+        "IncidentRepository.get_by_id",
+        return_value=fake_incident_model,
+    ), patch(
+        "app.api.investigations.stream_investigation",
+        side_effect=failing_stream,
+    ), patch(
+        "app.api.investigations.persist_investigation",
+    ) as mock_persist:
+
+        response = client.get(
+            "/api/investigations/stream/INC-001"
+        )
+
+    assert response.status_code == 200
+
+    body = response.text
+
+    assert "event: started" in body
+    assert "event: progress" in body
+
+    assert (
+        "event: investigation_error"
+        in body
+    )
+
+    assert (
+        "Simulated investigation failure"
+        in body
+    )
+
+    assert "event: completed" not in body
+
+    mock_persist.assert_not_called()

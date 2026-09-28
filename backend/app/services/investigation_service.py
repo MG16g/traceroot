@@ -40,6 +40,26 @@ def run_investigation(incident) -> InvestigationResponse:
         incident_id=incident.id,
     )
 
+def stream_investigation(incident):
+    """
+    Stream graph state snapshots as TraceRoot investigates
+    an incident.
+
+    The caller can use intermediate snapshots for progress
+    updates and the final snapshot to build/persist the
+    InvestigationResponse without executing the graph twice.
+    """
+
+    graph = build_investigation_graph()
+
+    initial_state = InvestigationState(
+        incident=incident,
+    )
+
+    yield from graph.stream(
+        initial_state,
+        stream_mode="values",
+    )
 
 def build_investigation_response(
     result: dict,

@@ -40,3 +40,19 @@ export type InvestigationResponse = {
   final_report: string | null
   error: string | null
 }
+
+export type InvestigationStreamEventType =
+  | 'started'
+  | 'progress'
+  | 'completed'
+  | 'investigation_error'
+
+export type InvestigationStreamEvent = {
+  event: InvestigationStreamEventType
+  incident_id: string
+  node?: string | null
+  step?: string | null
+  iteration?: number | null
+  message: string
+  data?: InvestigationResponse | null
+}

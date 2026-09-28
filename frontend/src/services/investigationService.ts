@@ -1,6 +1,7 @@
 import type {
   InvestigationRequest,
   InvestigationResponse,
+  InvestigationStreamEvent,
 } from '../types/investigation'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
@@ -65,4 +66,61 @@ export async function getInvestigation(
   )
 
   return parseResponse(response)
+}
+
+
+export function streamInvestigation(
+  incidentId: string,
+  onEvent: (event: InvestigationStreamEvent) => void,
+  onError: (message: string) => void,
+): EventSource {
+  const eventSource = new EventSource(
+    `${API_BASE_URL}/api/investigations/stream/${encodeURIComponent(
+      incidentId,
+    )}`,
+  )
+
+  const handleEvent = (rawEvent: MessageEvent) => {
+    try {
+      const event = JSON.parse(
+        rawEvent.data,
+      ) as InvestigationStreamEvent
+
+      onEvent(event)
+    } catch {
+      onError('Received an invalid investigation event.')
+      eventSource.close()
+    }
+  }
+
+  eventSource.addEventListener(
+    'started',
+    handleEvent,
+  )
+
+  eventSource.addEventListener(
+    'progress',
+    handleEvent,
+  )
+
+  eventSource.addEventListener(
+    'completed',
+    handleEvent,
+  )
+
+  eventSource.addEventListener(
+    'investigation_error',
+    handleEvent,
+  )
+
+  eventSource.onerror = () => {
+    if (eventSource.readyState === EventSource.CLOSED) {
+      return
+    }
+
+    onError('Live investigation connection was interrupted.')
+    eventSource.close()
+  }
+
+  return eventSource
 }

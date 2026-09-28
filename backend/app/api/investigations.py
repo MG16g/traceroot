@@ -4,6 +4,10 @@ from fastapi import (
     HTTPException,
 )
 
+import json
+
+from fastapi.responses import StreamingResponse
+
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db
@@ -20,9 +24,11 @@ from app.schemas.api import (
 from app.schemas.incident import Incident
 
 from app.services.investigation_service import (
+    build_investigation_response,
     get_latest_investigation,
     persist_investigation,
     run_investigation,
+    stream_investigation,
 )
 
 
@@ -103,3 +109,165 @@ def get_investigation(
         )
 
     return response
+
+
+def build_progress_message(
+    step: str,
+) -> str:
+    messages = {
+        "action_selected":
+            "Selected the next investigation action.",
+
+        "evidence_collected":
+            "Collected telemetry evidence.",
+
+        "no_results":
+            "Investigation action returned no results.",
+
+        "hypothesis_updated":
+            "Updated the incident hypothesis.",
+
+        "root_cause_evaluated":
+            "Evaluated the root-cause candidate.",
+
+        "duplicate_action_skipped":
+            "Skipped a duplicate investigation action.",
+
+        "no_hypothesis_evidence":
+            "No evidence available for hypothesis generation.",
+
+        "no_root_cause_candidate":
+            "No root-cause candidate established yet.",
+
+        "tool_error":
+            "An investigation tool encountered an error.",
+
+        "completed":
+            "Generated the final RCA report.",
+    }
+
+    return messages.get(
+        step,
+        f"Investigation step: {step}",
+    )
+
+@router.get("/stream/{incident_id}")
+def stream_investigation_endpoint(
+    incident_id: str,
+    db: Session = Depends(get_db),
+):
+    repository = IncidentRepository(db)
+
+    incident_model = repository.get_by_id(
+        incident_id
+    )
+
+    if incident_model is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Incident {incident_id} not found",
+        )
+
+    incident = Incident(
+        id=incident_model.id,
+        title=incident_model.title,
+        description=incident_model.description,
+        service=incident_model.service,
+        severity=incident_model.severity,
+        status=incident_model.status,
+        created_at=incident_model.created_at,
+    )
+
+    def event_generator():
+        final_state = None
+
+        try:
+            started = {
+                "event": "started",
+                "incident_id": incident_id,
+                "message": "Investigation started",
+            }
+
+            yield (
+                f"event: started\n"
+                f"data: {json.dumps(started)}\n\n"
+            )
+
+            for state in stream_investigation(
+                incident
+            ):
+                final_state = state
+
+                step = state.get(
+                    "current_step",
+                    "unknown",
+                )
+
+                iteration = state.get(
+                    "iteration",
+                    0,
+                )
+
+                progress = {
+                    "event": "progress",
+                    "incident_id": incident_id,
+                    "step": step,
+                    "iteration": iteration,
+                    "message": build_progress_message(
+                        step
+                    ),
+                }
+
+                yield (
+                    f"event: progress\n"
+                    f"data: {json.dumps(progress)}\n\n"
+                )
+
+            if final_state is None:
+                raise RuntimeError(
+                    "Investigation completed without graph state"
+                )
+
+            response = build_investigation_response(
+                result=final_state,
+                incident_id=incident_id,
+            )
+
+            persist_investigation(
+                db=db,
+                response=response,
+            )
+
+            completed = {
+                "event": "completed",
+                "incident_id": incident_id,
+                "message": "Investigation completed",
+                "data": response.model_dump(),
+            }
+
+            yield (
+                f"event: completed\n"
+                f"data: {json.dumps(completed)}\n\n"
+            )
+
+        except Exception as exc:
+            error = {
+                "event": "investigation_error",
+                "incident_id": incident_id,
+                "message": str(exc),
+            }
+
+            yield (
+                f"event: investigation_error\n"
+                f"data: {json.dumps(error)}\n\n"
+            )
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
