@@ -7,6 +7,13 @@ type StatCardProps = {
   tone?: StatCardTone
 }
 
+const icons: Record<StatCardTone, string> = {
+  warning: '▶',
+  critical: '!',
+  default: '▤',
+  success: '✓',
+}
+
 function StatCard({
   label,
   value,
@@ -15,14 +22,28 @@ function StatCard({
 }: StatCardProps) {
   return (
     <article className={`stat-card stat-card-${tone}`}>
-      <div className="stat-card-header">
-        <span className="stat-card-label">{label}</span>
-        <span className="stat-card-indicator" aria-hidden="true" />
+      <div className="stat-card-icon" aria-hidden="true">
+        {icons[tone]}
       </div>
 
-      <div className="stat-card-value">{value}</div>
+      <div className="stat-card-content">
+        <span className="stat-card-label">
+          {label}
+        </span>
 
-      <p className="stat-card-detail">{detail}</p>
+        <strong className="stat-card-value">
+          {value}
+        </strong>
+
+        <span className="stat-card-detail">
+          {detail}
+        </span>
+      </div>
+
+      <div
+        className="stat-card-wave"
+        aria-hidden="true"
+      />
     </article>
   )
 }

@@ -3,28 +3,37 @@ type HeaderProps = {
   description?: string
 }
 
-function Header({ title, description }: HeaderProps) {
+function Header({
+  title,
+  description,
+}: HeaderProps) {
   return (
     <header className="page-header">
       <div>
-        <p className="header-context">TraceRoot / Production</p>
-
-        <h1 className="page-title">{title}</h1>
+        <h1 className="page-title">
+          {title}
+        </h1>
 
         {description && (
-          <p className="page-description">{description}</p>
+          <p className="page-description">
+            {description}
+          </p>
         )}
       </div>
 
       <div className="header-actions">
-        <div className="environment-badge">
-          <span className="environment-indicator" />
-          Production
+        <div className="header-notification">
+          ♢
         </div>
 
-        <div className="operational-badge">
-          <span className="status-dot" />
-          Operational
+        <div className="header-profile">
+          <div className="header-avatar">
+            MG
+          </div>
+
+          <span className="header-profile-name">
+            Meghan
+          </span>
         </div>
       </div>
     </header>

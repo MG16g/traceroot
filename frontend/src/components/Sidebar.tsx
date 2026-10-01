@@ -7,6 +7,7 @@ type NavigationItem = {
 }
 
 const navigationItems: NavigationItem[] = [
+  
   {
     label: 'Dashboard',
     path: '/',
@@ -15,7 +16,7 @@ const navigationItems: NavigationItem[] = [
   {
     label: 'Incidents',
     path: '/incidents',
-    icon: '⚠',
+    icon: '△',
   },
   {
     label: 'Investigations',
@@ -25,13 +26,14 @@ const navigationItems: NavigationItem[] = [
   {
     label: 'RCA Reports',
     path: '/rca-reports',
-    icon: '≡',
+    icon: '▤',
   },
   {
     label: 'Telemetry',
     path: '/telemetry',
     icon: '⌁',
   },
+
 ]
 
 function Sidebar() {

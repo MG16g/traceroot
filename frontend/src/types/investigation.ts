@@ -41,6 +41,16 @@ export type InvestigationResponse = {
   error: string | null
 }
 
+export type InvestigationHistoryItem = {
+  investigation_id: string
+  incident_id: string
+  status: string
+  iteration: number
+  current_step: string
+  created_at: string
+  root_cause_confidence: number | null
+}
+
 export type InvestigationStreamEventType =
   | 'started'
   | 'progress'

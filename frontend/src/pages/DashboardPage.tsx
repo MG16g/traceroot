@@ -6,11 +6,17 @@ import IncidentTable from '../components/IncidentTable'
 import InvestigationPanel from '../components/InvestigationPanel'
 import InvestigationError from '../components/InvestigationError'
 import InvestigationTimeline from '../components/InvestigationTimeline'
+import InvestigationHistory from '../components/InvestigationHistory'
 
-import { streamInvestigation } from '../services/investigationService'
+import {
+  getInvestigationHistory,
+  getInvestigationRun,
+  streamInvestigation,
+} from '../services/investigationService'
 
 import type { Incident } from '../types/incident'
 import type {
+  InvestigationHistoryItem,
   InvestigationResponse,
   InvestigationStreamEvent,
 } from '../types/investigation'
@@ -81,8 +87,119 @@ function DashboardPage() {
     setStreamEvents,
   ] = useState<InvestigationStreamEvent[]>([])
 
+  const [
+    investigationHistory,
+    setInvestigationHistory,
+  ] = useState<InvestigationHistoryItem[]>([])
+
+  const [
+    historyLoading,
+    setHistoryLoading,
+  ] = useState(true)
+
+  const [
+    historyError,
+    setHistoryError,
+  ] = useState<string | null>(null)
+
+  const [
+    historyDetailLoading,
+    setHistoryDetailLoading,
+  ] = useState(false)
+
+  const [
+    historyDetailError,
+    setHistoryDetailError,
+  ] = useState<string | null>(null)
+
   const eventSourceRef =
     useRef<EventSource | null>(null)
+
+
+  // =========================
+  // Refresh Investigation History
+  // =========================
+
+  async function refreshInvestigationHistory(
+    showLoading = false,
+  ) {
+    if (showLoading) {
+      setHistoryLoading(true)
+    }
+
+    setHistoryError(null)
+
+    try {
+      const history =
+        await getInvestigationHistory(
+          'INC-001',
+        )
+
+      setInvestigationHistory(
+        history,
+      )
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to load investigation history.',
+      )
+    } finally {
+      if (showLoading) {
+        setHistoryLoading(false)
+      }
+    }
+  }
+
+
+  // =========================
+  // Initial History Load
+  // =========================
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadInitialHistory() {
+      setHistoryLoading(true)
+      setHistoryError(null)
+
+      try {
+        const history =
+          await getInvestigationHistory(
+            'INC-001',
+          )
+
+        if (!cancelled) {
+          setInvestigationHistory(
+            history,
+          )
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setHistoryError(
+            error instanceof Error
+              ? error.message
+              : 'Unable to load investigation history.',
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setHistoryLoading(false)
+        }
+      }
+    }
+
+    void loadInitialHistory()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+
+  // =========================
+  // EventSource Cleanup
+  // =========================
 
   useEffect(() => {
     return () => {
@@ -92,87 +209,214 @@ function DashboardPage() {
   }, [])
 
 
-  function handleInvestigate(incidentId: string) {
+  // =========================
+  // View Historical Run
+  // =========================
+
+  async function handleViewInvestigation(
+    investigationId: string,
+  ) {
+    setHistoryDetailLoading(true)
+    setHistoryDetailError(null)
+
+    try {
+      const investigation =
+        await getInvestigationRun(
+          investigationId,
+        )
+
+      setInvestigationResult(
+        investigation,
+      )
+
+      // Historical investigations do not
+      // have a live execution timeline.
+      setStreamEvents([])
+
+      setInvestigationError(null)
+      setFailedIncidentId(null)
+
+      // Scroll to the details after React
+      // renders the investigation panel.
+      window.setTimeout(() => {
+        document
+          .querySelector(
+            '.investigation-panel',
+          )
+          ?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          })
+      }, 0)
+    } catch (error) {
+      setHistoryDetailError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to load investigation details.',
+      )
+    } finally {
+      setHistoryDetailLoading(false)
+    }
+  }
+
+
+  // =========================
+  // Start Investigation
+  // =========================
+
+  function handleInvestigate(
+    incidentId: string,
+  ) {
     // Close any previous investigation stream.
     eventSourceRef.current?.close()
     eventSourceRef.current = null
 
     // Reset the UI for the new investigation.
-    setInvestigatingIncidentId(incidentId)
+    setInvestigatingIncidentId(
+      incidentId,
+    )
+
     setInvestigationError(null)
     setFailedIncidentId(null)
     setInvestigationResult(null)
     setStreamEvents([])
 
+    // Clear any previous historical-detail error.
+    setHistoryDetailError(null)
+
     const eventSource = streamInvestigation(
       incidentId,
 
       (event) => {
-        // Live investigation events.
+        // =========================
+        // Investigation Started
+        // =========================
+
         if (event.event === 'started') {
-          setStreamEvents((current) => [
-            ...current,
-            event,
-          ])
+          setStreamEvents(
+            (current) => [
+              ...current,
+              event,
+            ],
+          )
 
           return
         }
 
+
+        // =========================
+        // Investigation Progress
+        // =========================
+
         if (event.event === 'progress') {
+          // Internal triage event is not
+          // shown to the user.
           if (event.step === 'triage') {
             return
           }
 
-          setStreamEvents((current) => [
-            ...current,
-            event,
-          ])
+          setStreamEvents(
+            (current) => [
+              ...current,
+              event,
+            ],
+          )
 
           return
         }
 
-        // Investigation finished successfully.
+
+        // =========================
+        // Investigation Completed
+        // =========================
+
         if (
           event.event === 'completed' &&
           event.data
         ) {
-          setStreamEvents((current) => [
-            ...current,
-            event,
-          ])
+          setStreamEvents(
+            (current) => [
+              ...current,
+              event,
+            ],
+          )
 
-          setInvestigationResult(event.data)
-          setInvestigatingIncidentId(null)
+          setInvestigationResult(
+            event.data,
+          )
+
+          setInvestigatingIncidentId(
+            null,
+          )
 
           eventSourceRef.current?.close()
           eventSourceRef.current = null
 
+          /*
+           * The backend persists the completed
+           * investigation before emitting the
+           * completed SSE event.
+           *
+           * Therefore the new investigation
+           * should already exist when this
+           * history request executes.
+           */
+          void refreshInvestigationHistory()
+
           return
         }
 
-        // Backend emitted an explicit error event.
-        if (event.event === 'investigation_error') {
-          setInvestigationError(event.message)
-          setFailedIncidentId(incidentId)
-          setInvestigatingIncidentId(null)
+
+        // =========================
+        // Backend Investigation Error
+        // =========================
+
+        if (
+          event.event ===
+          'investigation_error'
+        ) {
+          setInvestigationError(
+            event.message,
+          )
+
+          setFailedIncidentId(
+            incidentId,
+          )
+
+          setInvestigatingIncidentId(
+            null,
+          )
 
           eventSourceRef.current?.close()
           eventSourceRef.current = null
         }
       },
 
-      // Network / EventSource failure.
+
+      // =========================
+      // EventSource / Network Error
+      // =========================
+
       (message) => {
-        setInvestigationError(message)
-        setFailedIncidentId(incidentId)
-        setInvestigatingIncidentId(null)
+        setInvestigationError(
+          message,
+        )
+
+        setFailedIncidentId(
+          incidentId,
+        )
+
+        setInvestigatingIncidentId(
+          null,
+        )
 
         eventSourceRef.current?.close()
         eventSourceRef.current = null
       },
     )
 
-    eventSourceRef.current = eventSource
+    eventSourceRef.current =
+      eventSource
   }
 
 
@@ -188,6 +432,7 @@ function DashboardPage() {
         {/* =========================
             System Overview
         ========================== */}
+
         <section className="overview-section">
           <div className="section-heading">
             <div>
@@ -206,15 +451,17 @@ function DashboardPage() {
           </div>
 
           <div className="stats-grid">
-            {overviewStats.map((stat) => (
-              <StatCard
-                key={stat.label}
-                label={stat.label}
-                value={stat.value}
-                detail={stat.detail}
-                tone={stat.tone}
-              />
-            ))}
+            {overviewStats.map(
+              (stat) => (
+                <StatCard
+                  key={stat.label}
+                  label={stat.label}
+                  value={stat.value}
+                  detail={stat.detail}
+                  tone={stat.tone}
+                />
+              ),
+            )}
           </div>
         </section>
 
@@ -222,6 +469,7 @@ function DashboardPage() {
         {/* =========================
             Incident Queue
         ========================== */}
+
         <section className="incidents-section">
           <div className="section-heading">
             <div>
@@ -244,18 +492,22 @@ function DashboardPage() {
             investigatingIncidentId={
               investigatingIncidentId
             }
-            onInvestigate={handleInvestigate}
+            onInvestigate={
+              handleInvestigate
+            }
           />
 
 
           {/* =========================
               Live Investigation
           ========================== */}
+
           {streamEvents.length > 0 && (
             <InvestigationTimeline
               incidentId={
                 investigatingIncidentId ??
-                investigationResult?.incident_id ??
+                investigationResult
+                  ?.incident_id ??
                 failedIncidentId ??
                 'Unknown'
               }
@@ -266,13 +518,51 @@ function DashboardPage() {
 
 
         {/* =========================
+            Investigation History
+        ========================== */}
+
+        <InvestigationHistory
+          history={
+            investigationHistory
+          }
+          loading={historyLoading}
+          error={historyError}
+          onViewInvestigation={
+            handleViewInvestigation
+          }
+        />
+
+
+        {/* =========================
+            Historical Detail State
+        ========================== */}
+
+        {historyDetailLoading && (
+          <div className="history-detail-state">
+            Loading investigation details...
+          </div>
+        )}
+
+        {historyDetailError && (
+          <div className="history-detail-state history-detail-state-error">
+            {historyDetailError}
+          </div>
+        )}
+
+
+        {/* =========================
             Investigation Error
         ========================== */}
+
         {investigationError &&
           failedIncidentId && (
             <InvestigationError
-              message={investigationError}
-              incidentId={failedIncidentId}
+              message={
+                investigationError
+              }
+              incidentId={
+                failedIncidentId
+              }
               onRetry={() =>
                 handleInvestigate(
                   failedIncidentId,
@@ -285,6 +575,7 @@ function DashboardPage() {
         {/* =========================
             Investigation Result
         ========================== */}
+
         {investigationResult && (
           <InvestigationPanel
             investigation={

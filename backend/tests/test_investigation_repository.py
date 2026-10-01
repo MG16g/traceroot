@@ -91,3 +91,44 @@ def test_get_latest_investigation_by_incident():
     assert result is investigation
 
     db.scalar.assert_called_once()
+
+
+def test_get_investigation_history_by_incident():
+
+    db = MagicMock()
+
+    investigation_1 = InvestigationModel(
+        id="INV-003",
+        incident_id="INC-001",
+        status="completed",
+        iteration=3,
+        current_step="completed",
+        executed_actions="[]",
+    )
+
+    investigation_2 = InvestigationModel(
+        id="INV-002",
+        incident_id="INC-001",
+        status="completed",
+        iteration=2,
+        current_step="completed",
+        executed_actions="[]",
+    )
+
+    db.scalars.return_value.all.return_value = [
+        investigation_1,
+        investigation_2,
+    ]
+
+    repository = InvestigationRepository(db)
+
+    result = repository.get_history_by_incident_id(
+        "INC-001"
+    )
+
+    assert result == [
+        investigation_1,
+        investigation_2,
+    ]
+
+    db.scalars.assert_called_once()

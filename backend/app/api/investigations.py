@@ -17,6 +17,7 @@ from app.repositories.incident_repository import (
 )
 
 from app.schemas.api import (
+    InvestigationHistoryItem,
     InvestigationRequest,
     InvestigationResponse,
 )
@@ -25,6 +26,8 @@ from app.schemas.incident import Incident
 
 from app.services.investigation_service import (
     build_investigation_response,
+    get_investigation_history,
+    get_investigation_by_id,
     get_latest_investigation,
     persist_investigation,
     run_investigation,
@@ -84,6 +87,46 @@ def create_investigation(
     )
 
     return response
+
+@router.get(
+        "/{incident_id}/history",
+        response_model=list[InvestigationHistoryItem],
+    )
+def get_investigation_history_endpoint(
+        incident_id: str,
+        db: Session = Depends(get_db),
+    ) -> list[InvestigationHistoryItem]:
+
+        return get_investigation_history(
+            db=db,
+            incident_id=incident_id,
+        )
+
+@router.get(
+    "/runs/{investigation_id}",
+    response_model=InvestigationResponse,
+)
+def get_investigation_run(
+    investigation_id: str,
+    db: Session = Depends(get_db),
+) -> InvestigationResponse:
+
+    response = get_investigation_by_id(
+        db=db,
+        investigation_id=investigation_id,
+    )
+
+    if response is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Investigation "
+                f"{investigation_id} not found"
+            ),
+        )
+
+    return response
+
 
 @router.get(
     "/{incident_id}",

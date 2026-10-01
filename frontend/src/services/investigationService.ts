@@ -1,4 +1,5 @@
 import type {
+  InvestigationHistoryItem,
   InvestigationRequest,
   InvestigationResponse,
   InvestigationStreamEvent,
@@ -68,6 +69,63 @@ export async function getInvestigation(
   return parseResponse(response)
 }
 
+export async function getInvestigationRun(
+  investigationId: string,
+): Promise<InvestigationResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/investigations/runs/${encodeURIComponent(
+      investigationId,
+    )}`,
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    },
+  )
+
+  return parseResponse(response)
+}
+
+async function parseHistoryResponse(
+  response: Response,
+): Promise<InvestigationHistoryItem[]> {
+  if (!response.ok) {
+    let message = `Request failed with status ${response.status}`
+
+    try {
+      const errorBody = await response.json()
+
+      if (typeof errorBody?.detail === 'string') {
+        message = errorBody.detail
+      }
+    } catch {
+      // Response did not contain JSON error details.
+    }
+
+    throw new Error(message)
+  }
+
+  return response.json() as Promise<InvestigationHistoryItem[]>
+}
+
+export async function getInvestigationHistory(
+  incidentId: string,
+): Promise<InvestigationHistoryItem[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/investigations/${encodeURIComponent(
+      incidentId,
+    )}/history`,
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    },
+  )
+
+  return parseHistoryResponse(response)
+}
 
 export function streamInvestigation(
   incidentId: string,

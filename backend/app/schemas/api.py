@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-
+from datetime import datetime
 
 class InvestigationRequest(BaseModel):
     incident_id: str = Field(
@@ -70,3 +70,13 @@ class InvestigationResponse(BaseModel):
     final_report: str | None = None
 
     error: str | None = None
+
+
+class InvestigationHistoryItem(BaseModel):
+    investigation_id: str
+    incident_id: str
+    status: str
+    iteration: int
+    current_step: str
+    created_at: datetime
+    root_cause_confidence: float | None = None

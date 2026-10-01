@@ -16,36 +16,45 @@ function IncidentTable({
       <table className="incident-table">
         <thead>
           <tr>
-            <th>Incident</th>
+            <th>ID</th>
+            <th>Title</th>
             <th>Service</th>
             <th>Severity</th>
             <th>Status</th>
-            <th>
-              <span className="sr-only">Actions</span>
-            </th>
+            <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
           {incidents.map((incident) => {
             const isInvestigating =
-              investigatingIncidentId === incident.id
+              investigatingIncidentId ===
+              incident.id
 
             return (
               <tr key={incident.id}>
                 <td>
+                  <span className="incident-id">
+                    {incident.id}
+                  </span>
+                </td>
+
+                <td>
                   <div className="incident-primary">
-                    <span className="incident-id">{incident.id}</span>
                     <span className="incident-title">
                       {incident.title}
+                    </span>
+
+                    <span className="incident-description">
+                      Payment failures increased after deployment
                     </span>
                   </div>
                 </td>
 
                 <td>
-                  <code className="service-name">
+                  <span className="service-name">
                     {incident.service}
-                  </code>
+                  </span>
                 </td>
 
                 <td>
@@ -61,6 +70,7 @@ function IncidentTable({
                   <span
                     className={`status-badge status-${incident.status}`}
                   >
+                    <span className="status-dot-small" />
                     {incident.status}
                   </span>
                 </td>
@@ -70,15 +80,20 @@ function IncidentTable({
                     type="button"
                     className="investigate-button"
                     disabled={isInvestigating}
-                    onClick={() => onInvestigate(incident.id)}
+                    onClick={() =>
+                      onInvestigate(incident.id)
+                    }
                   >
+                    <span
+                      className="investigate-play"
+                      aria-hidden="true"
+                    >
+                      ▶
+                    </span>
+
                     {isInvestigating
                       ? 'Investigating...'
                       : 'Investigate'}
-
-                    {!isInvestigating && (
-                      <span aria-hidden="true">→</span>
-                    )}
                   </button>
                 </td>
               </tr>

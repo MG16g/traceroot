@@ -14,6 +14,7 @@ from app.schemas.investigation import InvestigationState
 
 from app.schemas.api import (
     InvestigationResponse,
+    InvestigationHistoryItem,
     EvidenceResponse,
     HypothesisResponse,
     RootCauseResponse,
@@ -254,6 +255,66 @@ def get_latest_investigation(
 
     model = repository.get_latest_by_incident_id(
         incident_id
+    )
+
+    if model is None:
+        return None
+
+    return investigation_model_to_response(
+        model
+    )
+
+
+def get_investigation_history(
+    db: Session,
+    incident_id: str,
+) -> list[InvestigationHistoryItem]:
+
+    repository = InvestigationRepository(db)
+
+    models = repository.get_history_by_incident_id(
+        incident_id
+    )
+
+    history = []
+
+    for model in models:
+        root_cause_confidence = None
+
+        if model.root_cause:
+            root_cause = json.loads(
+                model.root_cause
+            )
+
+            root_cause_confidence = (
+                root_cause.get("confidence")
+            )
+
+        history.append(
+            InvestigationHistoryItem(
+                investigation_id=model.id,
+                incident_id=model.incident_id,
+                status=model.status,
+                iteration=model.iteration,
+                current_step=model.current_step,
+                created_at=model.created_at,
+                root_cause_confidence=(
+                    root_cause_confidence
+                ),
+            )
+        )
+
+    return history
+
+def get_investigation_by_id(
+    db: Session,
+    investigation_id: str,
+) -> InvestigationResponse | None:
+
+    repository = InvestigationRepository(db)
+
+    model = repository.get_by_id(
+        investigation_id
     )
 
     if model is None:

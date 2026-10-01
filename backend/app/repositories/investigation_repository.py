@@ -54,3 +54,23 @@ class InvestigationRepository:
         )
 
         return self.db.scalar(statement)
+
+    def get_history_by_incident_id(
+        self,
+        incident_id: str,
+    ) -> list[InvestigationModel]:
+
+        statement = (
+            select(InvestigationModel)
+            .where(
+                InvestigationModel.incident_id
+                == incident_id
+            )
+            .order_by(
+                InvestigationModel.created_at.desc()
+            )
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )

@@ -7,6 +7,7 @@ from app.main import app
 from app.core.dependencies import get_db
 from app.schemas.api import (
     InvestigationResponse,
+    InvestigationHistoryItem,
     RootCauseResponse,
 )
 
@@ -419,6 +420,180 @@ def test_get_latest_investigation_not_found():
         )
     )
 
+
+# -------------------------------------------------------------------
+# GET /api/investigations/{incident_id}/history
+# -------------------------------------------------------------------
+
+
+def test_get_investigation_history():
+
+    history = [
+        InvestigationHistoryItem(
+            investigation_id="INV-003",
+            incident_id="INC-001",
+            status="completed",
+            iteration=3,
+            current_step="completed",
+            created_at=datetime(
+                2026,
+                10,
+                1,
+                10,
+                30,
+                tzinfo=timezone.utc,
+            ),
+            root_cause_confidence=0.92,
+        ),
+        InvestigationHistoryItem(
+            investigation_id="INV-002",
+            incident_id="INC-001",
+            status="completed",
+            iteration=2,
+            current_step="completed",
+            created_at=datetime(
+                2026,
+                9,
+                30,
+                18,
+                0,
+                tzinfo=timezone.utc,
+            ),
+            root_cause_confidence=0.84,
+        ),
+    ]
+
+    with patch(
+        "app.api.investigations."
+        "get_investigation_history",
+        return_value=history,
+    ) as mock_get:
+
+        response = client.get(
+            "/api/investigations/INC-001/history"
+        )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert len(body) == 2
+
+    assert body[0]["investigation_id"] == "INV-003"
+    assert body[0]["incident_id"] == "INC-001"
+    assert body[0]["status"] == "completed"
+    assert body[0]["iteration"] == 3
+    assert body[0]["root_cause_confidence"] == 0.92
+
+    assert body[1]["investigation_id"] == "INV-002"
+    assert body[1]["root_cause_confidence"] == 0.84
+
+    mock_get.assert_called_once_with(
+        db=fake_db,
+        incident_id="INC-001",
+    )
+
+
+def test_get_investigation_history_empty():
+
+    with patch(
+        "app.api.investigations."
+        "get_investigation_history",
+        return_value=[],
+    ) as mock_get:
+
+        response = client.get(
+            "/api/investigations/INC-999/history"
+        )
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+    mock_get.assert_called_once_with(
+        db=fake_db,
+        incident_id="INC-999",
+    )
+
+
+def test_get_investigation_run():
+
+    historical_response = InvestigationResponse(
+        incident_id="INC-001",
+        status="completed",
+        iteration=3,
+        current_step="completed",
+        executed_actions=[
+            "search_logs",
+            "query_metrics",
+        ],
+        root_cause=RootCauseResponse(
+            description="Database pool exhaustion",
+            supporting_evidence=["EV-001"],
+            contradicting_evidence=[],
+            source_types=["log"],
+            confidence=0.92,
+            status="supported",
+        ),
+        final_report="Historical RCA report",
+    )
+
+    with patch(
+        "app.api.investigations."
+        "get_investigation_by_id",
+        return_value=historical_response,
+    ) as mock_get:
+
+        response = client.get(
+            "/api/investigations/runs/INV-003"
+        )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["incident_id"] == "INC-001"
+    assert body["status"] == "completed"
+    assert body["iteration"] == 3
+    assert body["current_step"] == "completed"
+    assert body["final_report"] == (
+        "Historical RCA report"
+    )
+
+    assert body["root_cause"] is not None
+    assert (
+        body["root_cause"]["confidence"]
+        == 0.92
+    )
+
+    mock_get.assert_called_once_with(
+        db=fake_db,
+        investigation_id="INV-003",
+    )
+
+
+def test_get_investigation_run_not_found():
+
+    with patch(
+        "app.api.investigations."
+        "get_investigation_by_id",
+        return_value=None,
+    ) as mock_get:
+
+        response = client.get(
+            "/api/investigations/runs/INV-MISSING"
+        )
+
+    assert response.status_code == 404
+
+    assert response.json() == {
+        "detail":
+            "Investigation INV-MISSING not found"
+    }
+
+    mock_get.assert_called_once_with(
+        db=fake_db,
+        investigation_id="INV-MISSING",
+    )
 # -------------------------------------------------------------------
 # GET /api/investigations/stream/{incident_id}
 # -------------------------------------------------------------------
