@@ -18,6 +18,9 @@ from app.schemas.api import (
     EvidenceResponse,
     HypothesisResponse,
     RootCauseResponse,
+    InvestigationComparisonSide,
+    InvestigationComparisonChanges,
+    InvestigationComparisonResponse,
 )
 
 
@@ -322,4 +325,206 @@ def get_investigation_by_id(
 
     return investigation_model_to_response(
         model
+    )
+
+
+def compare_investigations(
+    db: Session,
+    baseline_investigation_id: str,
+    comparison_investigation_id: str,
+) -> InvestigationComparisonResponse | None:
+    """
+    Compare two persisted investigation runs.
+
+    Returns None when either investigation does not exist.
+
+    Raises ValueError when the investigations belong
+    to different incidents.
+    """
+
+    repository = InvestigationRepository(db)
+
+    baseline_model = repository.get_by_id(
+        baseline_investigation_id
+    )
+
+    comparison_model = repository.get_by_id(
+        comparison_investigation_id
+    )
+
+    if (
+        baseline_model is None
+        or comparison_model is None
+    ):
+        return None
+
+    if (
+        baseline_model.incident_id
+        != comparison_model.incident_id
+    ):
+        raise ValueError(
+            "Investigations must belong to "
+            "the same incident"
+        )
+
+    baseline = investigation_model_to_response(
+        baseline_model
+    )
+
+    comparison = investigation_model_to_response(
+        comparison_model
+    )
+
+    baseline_confidence = (
+        baseline.root_cause.confidence
+        if baseline.root_cause is not None
+        else None
+    )
+
+    comparison_confidence = (
+        comparison.root_cause.confidence
+        if comparison.root_cause is not None
+        else None
+    )
+
+    confidence_delta = None
+
+    if (
+        baseline_confidence is not None
+        and comparison_confidence is not None
+    ):
+        confidence_delta = round(
+            comparison_confidence
+            - baseline_confidence,
+            6,
+        )
+
+    baseline_root_cause_status = (
+        baseline.root_cause.status
+        if baseline.root_cause is not None
+        else None
+    )
+
+    comparison_root_cause_status = (
+        comparison.root_cause.status
+        if comparison.root_cause is not None
+        else None
+    )
+
+    baseline_evidence_ids = {
+        item.id
+        for item in baseline.evidence
+    }
+
+    comparison_evidence_ids = {
+        item.id
+        for item in comparison.evidence
+    }
+
+    baseline_hypothesis_ids = {
+        item.id
+        for item in baseline.hypotheses
+    }
+
+    comparison_hypothesis_ids = {
+        item.id
+        for item in comparison.hypotheses
+    }
+
+    baseline_side = InvestigationComparisonSide(
+        investigation_id=baseline_model.id,
+        incident_id=baseline_model.incident_id,
+        created_at=baseline_model.created_at,
+        status=baseline.status,
+        iteration=baseline.iteration,
+        current_step=baseline.current_step,
+        action_count=len(
+            baseline.executed_actions
+        ),
+        evidence_count=len(
+            baseline.evidence
+        ),
+        hypothesis_count=len(
+            baseline.hypotheses
+        ),
+        root_cause_confidence=(
+            baseline_confidence
+        ),
+        root_cause_status=(
+            baseline_root_cause_status
+        ),
+    )
+
+    comparison_side = InvestigationComparisonSide(
+        investigation_id=comparison_model.id,
+        incident_id=comparison_model.incident_id,
+        created_at=comparison_model.created_at,
+        status=comparison.status,
+        iteration=comparison.iteration,
+        current_step=comparison.current_step,
+        action_count=len(
+            comparison.executed_actions
+        ),
+        evidence_count=len(
+            comparison.evidence
+        ),
+        hypothesis_count=len(
+            comparison.hypotheses
+        ),
+        root_cause_confidence=(
+            comparison_confidence
+        ),
+        root_cause_status=(
+            comparison_root_cause_status
+        ),
+    )
+
+    changes = InvestigationComparisonChanges(
+        confidence_delta=confidence_delta,
+        iteration_delta=(
+            comparison.iteration
+            - baseline.iteration
+        ),
+        action_count_delta=(
+            len(comparison.executed_actions)
+            - len(baseline.executed_actions)
+        ),
+        evidence_count_delta=(
+            len(comparison.evidence)
+            - len(baseline.evidence)
+        ),
+        hypothesis_count_delta=(
+            len(comparison.hypotheses)
+            - len(baseline.hypotheses)
+        ),
+        status_changed=(
+            baseline.status
+            != comparison.status
+        ),
+        root_cause_status_changed=(
+            baseline_root_cause_status
+            != comparison_root_cause_status
+        ),
+        new_evidence_count=len(
+            comparison_evidence_ids
+            - baseline_evidence_ids
+        ),
+        removed_evidence_count=len(
+            baseline_evidence_ids
+            - comparison_evidence_ids
+        ),
+        new_hypothesis_count=len(
+            comparison_hypothesis_ids
+            - baseline_hypothesis_ids
+        ),
+        removed_hypothesis_count=len(
+            baseline_hypothesis_ids
+            - comparison_hypothesis_ids
+        ),
+    )
+
+    return InvestigationComparisonResponse(
+        baseline=baseline_side,
+        comparison=comparison_side,
+        changes=changes,
     )

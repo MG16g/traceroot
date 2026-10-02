@@ -7,8 +7,10 @@ import InvestigationPanel from '../components/InvestigationPanel'
 import InvestigationError from '../components/InvestigationError'
 import InvestigationTimeline from '../components/InvestigationTimeline'
 import InvestigationHistory from '../components/InvestigationHistory'
+import InvestigationComparison from '../components/InvestigationComparison'
 
 import {
+  getInvestigationComparison,
   getInvestigationHistory,
   getInvestigationRun,
   streamInvestigation,
@@ -16,6 +18,7 @@ import {
 
 import type { Incident } from '../types/incident'
 import type {
+  InvestigationComparisonResponse,
   InvestigationHistoryItem,
   InvestigationResponse,
   InvestigationStreamEvent,
@@ -110,6 +113,33 @@ function DashboardPage() {
   const [
     historyDetailError,
     setHistoryDetailError,
+  ] = useState<string | null>(null)
+
+  const [
+    baselineInvestigationId,
+    setBaselineInvestigationId,
+  ] = useState<string>('')
+
+  const [
+    comparisonInvestigationId,
+    setComparisonInvestigationId,
+  ] = useState<string>('')
+
+  const [
+    investigationComparison,
+    setInvestigationComparison,
+  ] = useState<InvestigationComparisonResponse | null>(
+    null,
+  )
+
+  const [
+    comparisonLoading,
+    setComparisonLoading,
+  ] = useState(false)
+
+  const [
+    comparisonError,
+    setComparisonError,
   ] = useState<string | null>(null)
 
   const eventSourceRef =
@@ -256,6 +286,64 @@ function DashboardPage() {
       )
     } finally {
       setHistoryDetailLoading(false)
+    }
+  }
+
+
+  async function handleCompareInvestigations() {
+    if (
+      !baselineInvestigationId ||
+      !comparisonInvestigationId
+    ) {
+      setComparisonError(
+        'Select two investigation runs to compare.',
+      )
+      return
+    }
+
+    if (
+      baselineInvestigationId ===
+      comparisonInvestigationId
+    ) {
+      setComparisonError(
+        'Select two different investigation runs.',
+      )
+      return
+    }
+
+    setComparisonLoading(true)
+    setComparisonError(null)
+    setInvestigationComparison(null)
+
+    try {
+      const comparison =
+        await getInvestigationComparison(
+          baselineInvestigationId,
+          comparisonInvestigationId,
+        )
+
+      setInvestigationComparison(
+        comparison,
+      )
+
+      window.setTimeout(() => {
+        document
+          .querySelector(
+            '.investigation-comparison',
+          )
+          ?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          })
+      }, 0)
+    } catch (error) {
+      setComparisonError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to compare investigations.',
+      )
+    } finally {
+      setComparisonLoading(false)
     }
   }
 
@@ -531,6 +619,142 @@ function DashboardPage() {
             handleViewInvestigation
           }
         />
+
+
+        {investigationHistory.length >= 2 && (
+          <section className="comparison-selector">
+            <div className="comparison-selector-header">
+              <div>
+                <p className="eyebrow">
+                  Run Comparison
+                </p>
+
+                <h2>
+                  Compare Investigations
+                </h2>
+
+                <p className="comparison-selector-description">
+                  Compare two persisted investigation runs
+                  to see how evidence, hypotheses, confidence,
+                  and execution changed.
+                </p>
+              </div>
+            </div>
+
+            <div className="comparison-selector-controls">
+              <div className="comparison-field">
+                <label htmlFor="baseline-investigation">
+                  Baseline
+                </label>
+
+                <select
+                  id="baseline-investigation"
+                  value={baselineInvestigationId}
+                  onChange={(event) => {
+                    setBaselineInvestigationId(
+                      event.target.value,
+                    )
+
+                    setInvestigationComparison(null)
+                    setComparisonError(null)
+                  }}
+                >
+                  <option value="">
+                    Select baseline run
+                  </option>
+
+                  {investigationHistory.map((item) => (
+                    <option
+                      key={item.investigation_id}
+                      value={item.investigation_id}
+                    >
+                      {item.investigation_id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div
+                className="comparison-direction"
+                aria-hidden="true"
+              >
+                →
+              </div>
+
+              <div className="comparison-field">
+                <label htmlFor="comparison-investigation">
+                  Comparison
+                </label>
+
+                <select
+                  id="comparison-investigation"
+                  value={comparisonInvestigationId}
+                  onChange={(event) => {
+                    setComparisonInvestigationId(
+                      event.target.value,
+                    )
+
+                    setInvestigationComparison(null)
+                    setComparisonError(null)
+                  }}
+                >
+                  <option value="">
+                    Select comparison run
+                  </option>
+
+                  {investigationHistory.map((item) => (
+                    <option
+                      key={item.investigation_id}
+                      value={item.investigation_id}
+                    >
+                      {item.investigation_id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                className="comparison-button"
+                disabled={
+                  comparisonLoading ||
+                  !baselineInvestigationId ||
+                  !comparisonInvestigationId ||
+                  baselineInvestigationId ===
+                    comparisonInvestigationId
+                }
+                onClick={() => {
+                  void handleCompareInvestigations()
+                }}
+              >
+                {comparisonLoading
+                  ? 'Comparing...'
+                  : 'Compare Runs'}
+              </button>
+            </div>
+
+            {comparisonError && (
+              <div className="comparison-error">
+                {comparisonError}
+              </div>
+            )}
+          </section>
+        )}
+
+
+        {investigationComparison && (
+         <InvestigationComparison
+            history={investigationHistory}
+            baselineId={baselineInvestigationId}
+            comparisonId={comparisonInvestigationId}
+            comparison={investigationComparison}
+            loading={comparisonLoading}
+            error={comparisonError}
+            onBaselineChange={setBaselineInvestigationId}
+            onComparisonChange={setComparisonInvestigationId}
+            onCompare={handleCompareInvestigations}
+          />
+        )}
 
 
         {/* =========================

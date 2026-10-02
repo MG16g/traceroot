@@ -1,4 +1,5 @@
 import type {
+  InvestigationComparisonResponse,
   InvestigationHistoryItem,
   InvestigationRequest,
   InvestigationResponse,
@@ -125,6 +126,42 @@ export async function getInvestigationHistory(
   )
 
   return parseHistoryResponse(response)
+}
+
+export async function getInvestigationComparison(
+  baselineId: string,
+  comparisonId: string,
+): Promise<InvestigationComparisonResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/investigations/compare/${encodeURIComponent(
+      baselineId,
+    )}/${encodeURIComponent(comparisonId)}`,
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    },
+  )
+
+  if (!response.ok) {
+    let message =
+      `Comparison request failed with status ${response.status}`
+
+    try {
+      const errorBody = await response.json()
+
+      if (typeof errorBody?.detail === 'string') {
+        message = errorBody.detail
+      }
+    } catch {
+      // Response did not contain JSON error details.
+    }
+
+    throw new Error(message)
+  }
+
+  return response.json() as Promise<InvestigationComparisonResponse>
 }
 
 export function streamInvestigation(

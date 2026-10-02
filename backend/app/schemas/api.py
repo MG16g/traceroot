@@ -80,3 +80,39 @@ class InvestigationHistoryItem(BaseModel):
     current_step: str
     created_at: datetime
     root_cause_confidence: float | None = None
+
+
+class InvestigationComparisonSide(BaseModel):
+    investigation_id: str
+    incident_id: str
+    created_at: datetime
+    status: str
+    iteration: int
+    current_step: str
+    action_count: int
+    evidence_count: int
+    hypothesis_count: int
+    root_cause_confidence: float | None = None
+    root_cause_status: str | None = None
+
+
+class InvestigationComparisonChanges(BaseModel):
+    confidence_delta: float | None = None
+    iteration_delta: int
+    action_count_delta: int
+    evidence_count_delta: int
+    hypothesis_count_delta: int
+    status_changed: bool
+    root_cause_status_changed: bool
+    new_evidence_count: int
+    removed_evidence_count: int
+    new_hypothesis_count: int
+    removed_hypothesis_count: int
+
+
+class InvestigationComparisonResponse(BaseModel):
+    baseline: InvestigationComparisonSide
+    comparison: InvestigationComparisonSide
+    changes: InvestigationComparisonChanges
+
+    

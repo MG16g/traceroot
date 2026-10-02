@@ -17,6 +17,7 @@ from app.repositories.incident_repository import (
 )
 
 from app.schemas.api import (
+    InvestigationComparisonResponse,
     InvestigationHistoryItem,
     InvestigationRequest,
     InvestigationResponse,
@@ -26,6 +27,7 @@ from app.schemas.incident import Incident
 
 from app.services.investigation_service import (
     build_investigation_response,
+    compare_investigations,
     get_investigation_history,
     get_investigation_by_id,
     get_latest_investigation,
@@ -126,6 +128,47 @@ def get_investigation_run(
         )
 
     return response
+
+
+@router.get(
+    "/compare/{baseline_investigation_id}/{comparison_investigation_id}",
+)
+def compare_investigation_runs(
+    baseline_investigation_id: str,
+    comparison_investigation_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Compare two persisted investigation runs.
+
+    Both investigation runs must exist and belong
+    to the same incident.
+    """
+
+    try:
+        comparison = compare_investigations(
+            db=db,
+            baseline_investigation_id=baseline_investigation_id,
+            comparison_investigation_id=comparison_investigation_id,
+        )
+        
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    if comparison is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "One or both investigation runs "
+                "were not found"
+            ),
+        )
+
+    return comparison
 
 
 @router.get(

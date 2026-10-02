@@ -899,3 +899,125 @@ def test_stream_investigation_emits_investigation_error():
     assert "event: completed" not in body
 
     mock_persist.assert_not_called()
+
+
+# -------------------------------------------------------------------
+# GET /api/investigations/compare/{baseline_id}/{comparison_id}
+# -------------------------------------------------------------------
+
+
+def test_compare_investigations():
+
+    comparison_result = {
+        "incident_id": "INC-001",
+        "baseline_investigation_id": "INV-001",
+        "comparison_investigation_id": "INV-002",
+        "baseline_confidence": 0.70,
+        "comparison_confidence": 0.90,
+        "confidence_change": 0.20,
+        "baseline_evidence_count": 1,
+        "comparison_evidence_count": 3,
+        "evidence_count_change": 2,
+        "baseline_hypothesis_count": 1,
+        "comparison_hypothesis_count": 2,
+        "hypothesis_count_change": 1,
+    }
+
+    with patch(
+        "app.api.investigations."
+        "compare_investigations",
+        return_value=comparison_result,
+    ) as mock_compare:
+
+        response = client.get(
+            "/api/investigations/compare/"
+            "INV-001/INV-002"
+        )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["incident_id"] == "INC-001"
+
+    assert (
+        body["baseline_investigation_id"]
+        == "INV-001"
+    )
+
+    assert (
+        body["comparison_investigation_id"]
+        == "INV-002"
+    )
+
+    assert body["baseline_confidence"] == 0.70
+    assert body["comparison_confidence"] == 0.90
+
+    assert body["confidence_change"] == 0.20
+
+    assert body["baseline_evidence_count"] == 1
+    assert body["comparison_evidence_count"] == 3
+    assert body["evidence_count_change"] == 2
+
+    assert body["baseline_hypothesis_count"] == 1
+    assert body["comparison_hypothesis_count"] == 2
+    assert body["hypothesis_count_change"] == 1
+
+    mock_compare.assert_called_once_with(
+        db=fake_db,
+        baseline_investigation_id="INV-001",
+        comparison_investigation_id="INV-002",
+    )
+
+
+def test_compare_investigations_not_found():
+
+    with patch(
+        "app.api.investigations."
+        "compare_investigations",
+        return_value=None,
+    ) as mock_compare:
+
+        response = client.get(
+            "/api/investigations/compare/"
+            "INV-MISSING/INV-002"
+        )
+
+    assert response.status_code == 404
+
+    assert "detail" in response.json()
+
+    mock_compare.assert_called_once_with(
+        db=fake_db,
+        baseline_investigation_id="INV-MISSING",
+        comparison_investigation_id="INV-002",
+    )
+
+
+def test_compare_investigations_different_incidents():
+
+    with patch(
+        "app.api.investigations."
+        "compare_investigations",
+        side_effect=ValueError(
+            "Investigations belong to different incidents"
+        ),
+    ) as mock_compare:
+
+        response = client.get(
+            "/api/investigations/compare/"
+            "INV-001/INV-OTHER"
+        )
+
+    assert response.status_code == 400
+
+    assert (
+        response.json()["detail"]
+        == "Investigations belong to different incidents"
+    )
+
+    mock_compare.assert_called_once_with(
+        db=fake_db,
+        baseline_investigation_id="INV-001",
+        comparison_investigation_id="INV-OTHER",
+    )
