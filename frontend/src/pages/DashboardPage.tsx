@@ -8,12 +8,14 @@ import InvestigationError from '../components/InvestigationError'
 import InvestigationTimeline from '../components/InvestigationTimeline'
 import InvestigationHistory from '../components/InvestigationHistory'
 import InvestigationComparison from '../components/InvestigationComparison'
+import RCAReportView from '../components/RCAReportView'
 
 import {
   getInvestigationComparison,
   getInvestigationHistory,
   getInvestigationRun,
   streamInvestigation,
+  getRCAReport,
 } from '../services/investigationService'
 
 import type { Incident } from '../types/incident'
@@ -22,6 +24,7 @@ import type {
   InvestigationHistoryItem,
   InvestigationResponse,
   InvestigationStreamEvent,
+  RCAReportSummary,
 } from '../types/investigation'
 
 
@@ -140,6 +143,23 @@ function DashboardPage() {
   const [
     comparisonError,
     setComparisonError,
+  ] = useState<string | null>(null)
+
+  const [
+    selectedRCAReport,
+    setSelectedRCAReport,
+  ] = useState<RCAReportSummary | null>(
+    null,
+  )
+
+  const [
+    rcaReportLoading,
+    setRCAReportLoading,
+  ] = useState(false)
+
+  const [
+    rcaReportError,
+    setRCAReportError,
   ] = useState<string | null>(null)
 
   const eventSourceRef =
@@ -507,6 +527,36 @@ function DashboardPage() {
       eventSource
   }
 
+  async function handleViewRCAReport(
+  investigationId: string,
+) {
+  setRCAReportLoading(true)
+  setRCAReportError(null)
+  setSelectedRCAReport(null)
+
+  try {
+    const report =
+      await getRCAReport(
+        investigationId,
+      )
+
+    setSelectedRCAReport(report)
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unable to load the RCA report.'
+
+    setRCAReportError(message)
+  } finally {
+    setRCAReportLoading(false)
+  }
+}
+
+function handleCloseRCAReport() {
+  setSelectedRCAReport(null)
+  setRCAReportError(null)
+}
 
   return (
     <div className="dashboard-page">
@@ -610,15 +660,57 @@ function DashboardPage() {
         ========================== */}
 
         <InvestigationHistory
-          history={
-            investigationHistory
-          }
+          history={investigationHistory}
           loading={historyLoading}
           error={historyError}
           onViewInvestigation={
             handleViewInvestigation
           }
+          onViewReport={
+            handleViewRCAReport
+          }
         />
+
+        {rcaReportLoading && (
+          <div className="rca-report-state">
+            <div className="rca-report-spinner" />
+
+            <div>
+              <strong>
+                Loading RCA Report
+              </strong>
+
+              <p>
+                Retrieving the persisted
+                investigation analysis...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {rcaReportError && (
+          <div className="rca-report-state rca-report-state-error">
+            <div>
+              <strong>
+                Unable to load RCA report
+              </strong>
+
+              <p>
+                {rcaReportError}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {selectedRCAReport && (
+          <RCAReportView
+            report={selectedRCAReport}
+            onClose={
+              handleCloseRCAReport
+            }
+          />
+        )}
+
 
 
         {investigationHistory.length >= 2 && (

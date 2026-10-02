@@ -115,4 +115,52 @@ class InvestigationComparisonResponse(BaseModel):
     comparison: InvestigationComparisonSide
     changes: InvestigationComparisonChanges
 
-    
+
+class RCAReportEvidenceItem(BaseModel):
+    id: str
+    source_type: str
+    service: str
+    content: str
+    relevance_score: float
+
+
+class RCAReportSummary(BaseModel):
+    investigation_id: str
+    incident_id: str
+    created_at: datetime
+
+    investigation_status: str
+    iteration: int
+    current_step: str
+
+    root_cause_description: str | None = None
+    root_cause_status: str | None = None
+    root_cause_confidence: float | None = None
+
+    evidence_count: int
+    hypothesis_count: int
+    action_count: int
+
+    supporting_evidence: list[str] = Field(
+        default_factory=list
+    )
+
+    contradicting_evidence: list[str] = Field(
+        default_factory=list
+    )
+
+    source_types: list[str] = Field(
+        default_factory=list
+    )
+
+    evidence: list[RCAReportEvidenceItem] = Field(
+        default_factory=list
+    )
+
+    executed_actions: list[str] = Field(
+        default_factory=list
+    )
+
+    final_report: str | None = None
+
+    error: str | None = None

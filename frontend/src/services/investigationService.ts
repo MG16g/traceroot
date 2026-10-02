@@ -4,6 +4,7 @@ import type {
   InvestigationRequest,
   InvestigationResponse,
   InvestigationStreamEvent,
+  RCAReportSummary,
 } from '../types/investigation'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
@@ -218,4 +219,42 @@ export function streamInvestigation(
   }
 
   return eventSource
+}
+
+
+export async function getRCAReport(
+  investigationId: string,
+): Promise<RCAReportSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/investigations/runs/${encodeURIComponent(
+      investigationId,
+    )}/report`,
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    },
+  )
+
+  if (!response.ok) {
+    let message =
+      `RCA report request failed with status ${response.status}`
+
+    try {
+      const errorBody = await response.json()
+
+      if (
+        typeof errorBody?.detail === 'string'
+      ) {
+        message = errorBody.detail
+      }
+    } catch {
+      // Response did not contain JSON error details.
+    }
+
+    throw new Error(message)
+  }
+
+  return response.json() as Promise<RCAReportSummary>
 }

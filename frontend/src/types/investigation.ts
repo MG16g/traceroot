@@ -101,3 +101,31 @@ export type InvestigationStreamEvent = {
   message: string
   data?: InvestigationResponse | null
 }
+
+export type RCAReportSummary = {
+  investigation_id: string
+  incident_id: string
+  created_at: string
+
+  investigation_status: string
+  iteration: number
+  current_step: string
+
+  root_cause_description: string | null
+  root_cause_status: string | null
+  root_cause_confidence: number | null
+
+  evidence_count: number
+  hypothesis_count: number
+  action_count: number
+
+  supporting_evidence: string[]
+  contradicting_evidence: string[]
+  source_types: string[]
+
+  evidence: EvidenceResponse[]
+  executed_actions: string[]
+
+  final_report: string | null
+  error: string | null
+}

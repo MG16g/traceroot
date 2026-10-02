@@ -21,6 +21,8 @@ from app.schemas.api import (
     InvestigationComparisonSide,
     InvestigationComparisonChanges,
     InvestigationComparisonResponse,
+    RCAReportEvidenceItem,
+    RCAReportSummary,
 )
 
 
@@ -326,6 +328,119 @@ def get_investigation_by_id(
     return investigation_model_to_response(
         model
     )
+
+
+def get_rca_report(
+    db: Session,
+    investigation_id: str,
+) -> RCAReportSummary | None:
+    """
+    Build the persisted RCA report read model for
+    a specific investigation run.
+    """
+
+    repository = InvestigationRepository(db)
+
+    model = repository.get_by_id(
+        investigation_id
+    )
+
+    if model is None:
+        return None
+
+    response = investigation_model_to_response(
+        model
+    )
+
+    root_cause_description = None
+    root_cause_status = None
+    root_cause_confidence = None
+
+    supporting_evidence = []
+    contradicting_evidence = []
+    source_types = []
+
+    if response.root_cause is not None:
+        root_cause_description = (
+            response.root_cause.description
+        )
+
+        root_cause_status = (
+            response.root_cause.status
+        )
+
+        root_cause_confidence = (
+            response.root_cause.confidence
+        )
+
+        supporting_evidence = (
+            response.root_cause.supporting_evidence
+        )
+
+        contradicting_evidence = (
+            response.root_cause.contradicting_evidence
+        )
+
+        source_types = (
+            response.root_cause.source_types
+        )
+
+    evidence = [
+        RCAReportEvidenceItem(
+            id=item.id,
+            source_type=item.source_type,
+            service=item.service,
+            content=item.content,
+            relevance_score=item.relevance_score,
+        )
+        for item in response.evidence
+    ]
+
+    return RCAReportSummary(
+        investigation_id=model.id,
+        incident_id=model.incident_id,
+        created_at=model.created_at,
+
+        investigation_status=response.status,
+        iteration=response.iteration,
+        current_step=response.current_step,
+
+        root_cause_description=(
+            root_cause_description
+        ),
+        root_cause_status=root_cause_status,
+        root_cause_confidence=(
+            root_cause_confidence
+        ),
+
+        evidence_count=len(
+            response.evidence
+        ),
+        hypothesis_count=len(
+            response.hypotheses
+        ),
+        action_count=len(
+            response.executed_actions
+        ),
+
+        supporting_evidence=(
+            supporting_evidence
+        ),
+        contradicting_evidence=(
+            contradicting_evidence
+        ),
+        source_types=source_types,
+
+        evidence=evidence,
+
+        executed_actions=(
+            response.executed_actions
+        ),
+
+        final_report=response.final_report,
+        error=response.error,
+    )
+
 
 
 def compare_investigations(

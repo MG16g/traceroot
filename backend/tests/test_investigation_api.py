@@ -1021,3 +1021,132 @@ def test_compare_investigations_different_incidents():
         baseline_investigation_id="INV-001",
         comparison_investigation_id="INV-OTHER",
     )
+
+
+def test_get_investigation_rca_report():
+
+    report = {
+        "investigation_id": "INV-RCA-001",
+        "incident_id": "INC-001",
+        "created_at": "2026-10-02T10:00:00Z",
+
+        "investigation_status": "completed",
+        "iteration": 3,
+        "current_step": "completed",
+
+        "root_cause_description": (
+            "Database connection pool exhaustion"
+        ),
+        "root_cause_status": "supported",
+        "root_cause_confidence": 0.9,
+
+        "evidence_count": 1,
+        "hypothesis_count": 1,
+        "action_count": 2,
+
+        "supporting_evidence": [
+            "EV-001",
+        ],
+        "contradicting_evidence": [],
+
+        "source_types": [
+            "log",
+        ],
+
+        "evidence": [
+            {
+                "id": "EV-001",
+                "source_type": "log",
+                "service": "payment-service",
+                "content": (
+                    "Database connection timeout"
+                ),
+                "relevance_score": 0.95,
+            }
+        ],
+
+        "executed_actions": [
+            "search_logs",
+            "query_metrics",
+        ],
+
+        "final_report": (
+            "# Incident Summary\n"
+            "Payment failures increased."
+        ),
+
+        "error": None,
+    }
+
+    with patch(
+        "app.api.investigations."
+        "get_rca_report",
+        return_value=report,
+    ) as mock_report:
+
+        response = client.get(
+            "/api/investigations/runs/"
+            "INV-RCA-001/report"
+        )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert (
+        data["investigation_id"]
+        == "INV-RCA-001"
+    )
+
+    assert data["incident_id"] == "INC-001"
+
+    assert (
+        data["root_cause_status"]
+        == "supported"
+    )
+
+    assert (
+        data["root_cause_confidence"]
+        == 0.9
+    )
+
+    assert data["evidence_count"] == 1
+    assert data["hypothesis_count"] == 1
+    assert data["action_count"] == 2
+
+    assert len(data["evidence"]) == 1
+
+    mock_report.assert_called_once_with(
+        db=fake_db,
+        investigation_id="INV-RCA-001",
+    )
+
+
+def test_get_investigation_rca_report_not_found():
+
+    with patch(
+        "app.api.investigations."
+        "get_rca_report",
+        return_value=None,
+    ) as mock_report:
+
+        response = client.get(
+            "/api/investigations/runs/"
+            "INV-MISSING/report"
+        )
+
+    assert response.status_code == 404
+
+    data = response.json()
+
+    assert "detail" in data
+
+    assert (
+        "INV-MISSING"
+        in data["detail"]
+    )
+
+    mock_report.assert_called_once_with(
+        db=fake_db,
+        investigation_id="INV-MISSING",
+    )

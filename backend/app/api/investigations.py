@@ -21,6 +21,7 @@ from app.schemas.api import (
     InvestigationHistoryItem,
     InvestigationRequest,
     InvestigationResponse,
+    RCAReportSummary,
 )
 
 from app.schemas.incident import Incident
@@ -34,6 +35,7 @@ from app.services.investigation_service import (
     persist_investigation,
     run_investigation,
     stream_investigation,
+    get_rca_report,
 )
 
 
@@ -169,6 +171,32 @@ def compare_investigation_runs(
         )
 
     return comparison
+
+
+@router.get(
+    "/runs/{investigation_id}/report",
+    response_model=RCAReportSummary,
+)
+def get_investigation_rca_report(
+    investigation_id: str,
+    db: Session = Depends(get_db),
+) -> RCAReportSummary:
+
+    report = get_rca_report(
+        db=db,
+        investigation_id=investigation_id,
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"RCA report for investigation "
+                f"{investigation_id} not found"
+            ),
+        )
+
+    return report
 
 
 @router.get(

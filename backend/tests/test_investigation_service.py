@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
 
 from app.services.investigation_service import (
+    get_rca_report,
     persist_investigation,
 )
 
@@ -679,3 +680,157 @@ def test_compare_investigations_without_rca():
         result.changes.root_cause_status_changed
         is True
     )
+
+
+def test_get_rca_report():
+
+    model = InvestigationModel(
+        id="INV-RCA-001",
+        incident_id="INC-001",
+        status="completed",
+        iteration=3,
+        current_step="completed",
+
+        executed_actions=json.dumps(
+            [
+                "search_logs",
+                "query_metrics",
+            ]
+        ),
+
+        evidence=json.dumps(
+            [
+                {
+                    "id": "EV-001",
+                    "source_type": "log",
+                    "service": "payment-service",
+                    "content": (
+                        "Database connection timeout"
+                    ),
+                    "relevance_score": 0.95,
+                }
+            ]
+        ),
+
+        hypotheses=json.dumps(
+            [
+                {
+                    "id": "HYP-001",
+                    "description": (
+                        "Database connection exhaustion"
+                    ),
+                    "supporting_evidence": [
+                        "EV-001"
+                    ],
+                    "contradicting_evidence": [],
+                    "confidence": 0.9,
+                    "status": "investigating",
+                }
+            ]
+        ),
+
+        root_cause=json.dumps(
+            {
+                "description": (
+                    "Database connection pool "
+                    "exhaustion"
+                ),
+                "supporting_evidence": [
+                    "EV-001"
+                ],
+                "contradicting_evidence": [],
+                "source_types": [
+                    "log"
+                ],
+                "confidence": 0.9,
+                "status": "supported",
+            }
+        ),
+
+        final_report=(
+            "# Incident Summary\n"
+            "Payment failures increased."
+        ),
+
+        error=None,
+
+        created_at=datetime(
+            2026,
+            10,
+            2,
+            10,
+            0,
+            tzinfo=timezone.utc,
+        ),
+    )
+
+    with patch(
+        "app.services.investigation_service."
+        "InvestigationRepository.get_by_id",
+        return_value=model,
+    ) as mock_get:
+
+        result = get_rca_report(
+            db=object(),
+            investigation_id="INV-RCA-001",
+        )
+
+    assert result is not None
+
+    assert (
+        result.investigation_id
+        == "INV-RCA-001"
+    )
+
+    assert result.incident_id == "INC-001"
+
+    assert result.evidence_count == 1
+    assert result.hypothesis_count == 1
+    assert result.action_count == 2
+
+    assert (
+        result.root_cause_status
+        == "supported"
+    )
+
+    assert (
+        result.root_cause_confidence
+        == 0.9
+    )
+
+    assert (
+        result.root_cause_description
+        == "Database connection pool exhaustion"
+    )
+
+    assert len(result.evidence) == 1
+
+    assert (
+        result.evidence[0].id
+        == "EV-001"
+    )
+
+    assert (
+        result.final_report
+        is not None
+    )
+
+    mock_get.assert_called_once_with(
+        "INV-RCA-001"
+    )
+
+
+def test_get_rca_report_not_found():
+
+    with patch(
+        "app.services.investigation_service."
+        "InvestigationRepository.get_by_id",
+        return_value=None,
+    ):
+
+        result = get_rca_report(
+            db=object(),
+            investigation_id="INV-MISSING",
+        )
+
+    assert result is None

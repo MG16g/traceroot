@@ -7,7 +7,12 @@ type InvestigationHistoryProps = {
   onViewInvestigation: (
     investigationId: string,
   ) => void
+
+  onViewReport: (
+    investigationId: string,
+  ) => void
 }
+
 
 function formatHistoryDate(timestamp: string) {
   const date = new Date(timestamp)
@@ -56,6 +61,7 @@ function InvestigationHistory({
   loading,
   error,
   onViewInvestigation,
+  onViewReport,
 }: InvestigationHistoryProps) {
   return (
     <section className="history-panel">
@@ -222,19 +228,34 @@ function InvestigationHistory({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    className="history-details-button"
-                    aria-label={`View ${item.investigation_id}`}
-                    title="View investigation details"
-                    onClick={() =>
-                        onViewInvestigation(
-                        item.investigation_id,
+                  <div className="history-actions">
+                    <button
+                      type="button"
+                      className="history-report-button"
+                      onClick={() =>
+                        onViewReport(
+                          item.investigation_id,
                         )
-                    }
+                      }
+                      title={`View RCA report for ${item.investigation_id}`}
                     >
-                    ▤
-                 </button>
+                      RCA Report
+                    </button>
+
+                    <button
+                      type="button"
+                      className="history-details-button"
+                      aria-label={`View investigation ${item.investigation_id}`}
+                      title="View investigation details"
+                      onClick={() =>
+                        onViewInvestigation(
+                          item.investigation_id,
+                        )
+                      }
+                    >
+                      →
+                    </button>
+                  </div>
                 </article>
               )
             })}
