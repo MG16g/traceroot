@@ -4847,3 +4847,515 @@ button:disabled {
 
   transform: translateY(-1px);
 }
+
+
+/* ========================================
+   Dashboard Workspace Navigation
+======================================== */
+
+.dashboard-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-workspace-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  padding: 22px;
+
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+
+  color: inherit;
+  text-decoration: none;
+
+  background: var(--surface-color, #ffffff);
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.dashboard-workspace-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #94a3b8;
+
+  box-shadow:
+    0 8px 24px
+    rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-workspace-card-content {
+  min-width: 0;
+}
+
+.dashboard-workspace-card h3 {
+  margin: 0 0 8px;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dashboard-workspace-card p {
+  margin: 0;
+
+  font-size: 13px;
+  line-height: 1.6;
+
+  color: #64748b;
+}
+
+.dashboard-workspace-arrow {
+  flex-shrink: 0;
+
+  font-size: 22px;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .dashboard-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
+   RCA Reports Page
+======================================== */
+
+.rca-page-empty,
+.rca-page-state {
+  padding: 32px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  background: #ffffff;
+}
+
+.rca-page-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.rca-page-empty p,
+.rca-page-state p {
+  margin: 0;
+
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.rca-page-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.rca-page-state-error {
+  border-color: #fecaca;
+}
+
+.rca-back-link {
+  color: inherit;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rca-back-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .rca-page-empty {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ========================================
+   RCA Report Library
+======================================== */
+
+.rca-library {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rca-library-row {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.2fr)
+    minmax(240px, 2fr)
+    minmax(120px, 0.8fr)
+    auto;
+
+  align-items: center;
+  gap: 20px;
+
+  padding: 18px 20px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.rca-library-row:hover {
+  border-color: #cbd5e1;
+
+  box-shadow:
+    0 4px 14px
+    rgba(15, 23, 42, 0.05);
+}
+
+.rca-library-row-selected {
+  border-color: #94a3b8;
+}
+
+.rca-library-main,
+.rca-library-confidence {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rca-library-main strong {
+  font-size: 14px;
+}
+
+.rca-library-main span,
+.rca-library-confidence span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.rca-library-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+
+  color: #64748b;
+  font-size: 12px;
+}
+
+.rca-library-confidence strong {
+  font-size: 16px;
+}
+
+@media (max-width: 1000px) {
+  .rca-library-row {
+    grid-template-columns:
+      1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .rca-library-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ========================================
+   Telemetry Workspace
+======================================== */
+
+.telemetry-state {
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #64748b;
+}
+
+.telemetry-state-error {
+  border-color: #fecaca;
+}
+
+.telemetry-state-error p {
+  margin-bottom: 0;
+}
+
+.telemetry-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.telemetry-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding: 18px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+.telemetry-summary-card span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.telemetry-summary-card strong {
+  font-size: 24px;
+}
+
+.telemetry-catalog {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  margin-bottom: 20px;
+}
+
+.telemetry-catalog > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  padding: 14px 16px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.telemetry-catalog span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.telemetry-catalog strong {
+  font-size: 13px;
+}
+
+.telemetry-tabs {
+  display: flex;
+  gap: 8px;
+
+  margin-bottom: 16px;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.telemetry-tab {
+  padding: 10px 14px;
+
+  border: 0;
+  border-bottom: 2px solid transparent;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #64748b;
+}
+
+.telemetry-tab-active {
+  border-bottom-color: currentColor;
+  color: #0f172a;
+}
+
+.telemetry-record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.telemetry-record {
+  padding: 16px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+.telemetry-record-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  margin-bottom: 10px;
+}
+
+.telemetry-record-header time {
+  margin-left: auto;
+
+  color: #64748b;
+  font-size: 12px;
+}
+
+.telemetry-record-badge {
+  padding: 3px 8px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.telemetry-record p {
+  margin: 0;
+
+  line-height: 1.6;
+}
+
+.telemetry-metric-value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.telemetry-record-json {
+  overflow-x: auto;
+
+  margin: 0;
+  padding: 12px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .telemetry-summary-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .telemetry-catalog {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .telemetry-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .telemetry-tabs {
+    overflow-x: auto;
+  }
+
+  .telemetry-record-header time {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+
+/* ========================================
+   Telemetry Deployments
+======================================== */
+
+.telemetry-deployment-record {
+  padding: 18px;
+}
+
+.telemetry-deployment-status {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 4px 9px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.telemetry-deployment-status-success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.telemetry-deployment-status-failed,
+.telemetry-deployment-status-failure {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.telemetry-deployment-status-pending {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.telemetry-deployment-details {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-top: 12px;
+}
+
+.telemetry-deployment-details > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  padding: 12px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.telemetry-deployment-details span {
+  color: #64748b;
+
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.telemetry-deployment-details strong {
+  font-size: 13px;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .telemetry-deployment-details {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .telemetry-deployment-details {
+    grid-template-columns: 1fr;
+  }
+}
