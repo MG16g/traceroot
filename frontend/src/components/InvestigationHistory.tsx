@@ -1,9 +1,11 @@
 import type { InvestigationHistoryItem } from '../types/investigation'
 
 type InvestigationHistoryProps = {
+  incidentId: string
   history: InvestigationHistoryItem[]
   loading: boolean
   error: string | null
+
   onViewInvestigation: (
     investigationId: string,
   ) => void
@@ -57,6 +59,7 @@ function confidencePercentage(
 }
 
 function InvestigationHistory({
+  incidentId,
   history,
   loading,
   error,
@@ -80,7 +83,7 @@ function InvestigationHistory({
             </h2>
 
             <p>
-              Previous investigations for INC-001
+              Previous investigations for {incidentId}
             </p>
           </div>
         </div>

@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.incidents import router as incidents_router
 from app.api.investigations import (
     router as investigations_router,
 )
-
 from app.api.telemetry import router as telemetry_router
+
 
 app = FastAPI(
     title="TraceRoot API",
@@ -24,9 +25,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(incidents_router)
 app.include_router(investigations_router)
-
 app.include_router(telemetry_router)
+
 
 @app.get("/health")
 def health_check():

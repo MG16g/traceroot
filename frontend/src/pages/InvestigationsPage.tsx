@@ -583,6 +583,7 @@ function InvestigationsPage() {
 
         {requestedIncidentId && (
           <InvestigationHistory
+            incidentId={requestedIncidentId}
             history={investigationHistory}
             loading={historyLoading}
             error={historyError}
@@ -591,7 +592,9 @@ function InvestigationsPage() {
             }
            onViewReport={(investigationId) => {
               navigate(
-                `/rca-reports?investigation=${encodeURIComponent(
+                `/rca-reports?incident=${encodeURIComponent(
+                  requestedIncidentId,
+                )}&investigation=${encodeURIComponent(
                   investigationId,
                 )}`,
               )

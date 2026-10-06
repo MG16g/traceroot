@@ -13,6 +13,14 @@ import Header from '../components/Header'
 import RCAReportView from '../components/RCAReportView'
 
 import {
+  getIncidents,
+} from '../services/incidentService'
+
+import type {
+  Incident,
+} from '../types/incident'
+
+import {
   getInvestigationHistory,
   getRCAReport,
 } from '../services/investigationService'
@@ -22,7 +30,6 @@ import type {
   RCAReportSummary,
 } from '../types/investigation'
 
-const DEFAULT_INCIDENT_ID = 'INC-001'
 
 function formatDate(timestamp: string) {
   const date = new Date(timestamp)
@@ -49,11 +56,36 @@ function formatConfidence(
 function RCAReportsPage() {
   const navigate = useNavigate()
 
-  const [searchParams] =
-    useSearchParams()
+  const [
+    searchParams,
+    setSearchParams,
+  ] = useSearchParams()
+
+  const incidentId =
+    searchParams.get('incident')
 
   const investigationId =
     searchParams.get('investigation')
+
+
+  // =========================
+  // Incident Discovery
+  // =========================
+
+  const [
+    incidents,
+    setIncidents,
+  ] = useState<Incident[]>([])
+
+  const [
+    incidentsLoading,
+    setIncidentsLoading,
+  ] = useState(true)
+
+  const [
+    incidentsError,
+    setIncidentsError,
+  ] = useState<string | null>(null)
 
   // =========================
   // Report Library
@@ -95,11 +127,56 @@ function RCAReportsPage() {
     setReportError,
   ] = useState<string | null>(null)
 
+
+  // =========================
+  // Load Incidents
+  // =========================
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadIncidents() {
+      try {
+        const result = await getIncidents()
+
+        if (!cancelled) {
+          setIncidents(result)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setIncidents([])
+
+          setIncidentsError(
+            error instanceof Error
+              ? error.message
+              : 'Unable to load incidents.',
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setIncidentsLoading(false)
+        }
+      }
+    }
+
+    void loadIncidents()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   // =========================
   // Load Report Library
   // =========================
 
   useEffect(() => {
+    if (!incidentId) {
+      return
+    }
+
+    const selectedIncidentId = incidentId
+
     let cancelled = false
 
     async function loadReports() {
@@ -109,7 +186,7 @@ function RCAReportsPage() {
       try {
         const history =
           await getInvestigationHistory(
-            DEFAULT_INCIDENT_ID,
+            selectedIncidentId,
           )
 
         if (!cancelled) {
@@ -135,7 +212,7 @@ function RCAReportsPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [incidentId])
 
   // =========================
   // Load Selected RCA Report
@@ -189,14 +266,39 @@ function RCAReportsPage() {
   // Select Report
   // =========================
 
+  function handleIncidentChange(
+    selectedIncidentId: string,
+  ) {
+    setReports([])
+    setReportsError(null)
+
+    setReport(null)
+    setReportError(null)
+
+    if (!selectedIncidentId) {
+      setSearchParams({})
+      return
+    }
+
+    setSearchParams({
+      incident: selectedIncidentId,
+    })
+  }
+
   function handleViewReport(
     selectedInvestigationId: string,
   ) {
     setReport(null)
     setReportError(null)
 
-    navigate(
-      `/rca-reports?investigation=${encodeURIComponent(
+    if (!incidentId) {
+  return
+}
+
+  navigate(
+      `/rca-reports?incident=${encodeURIComponent(
+        incidentId,
+      )}&investigation=${encodeURIComponent(
         selectedInvestigationId,
       )}`,
     )
@@ -231,7 +333,8 @@ function RCAReportsPage() {
               </p>
             </div>
 
-            {!reportsLoading &&
+            { incidentId &&
+              !reportsLoading &&
               !reportsError && (
                 <span className="section-meta">
                   {reports.length}{' '}
@@ -242,11 +345,58 @@ function RCAReportsPage() {
               )}
           </div>
 
+          <div className="telemetry-catalog">
+            <div>
+              <span>Incident</span>
+
+              {incidentsLoading ? (
+                <strong>
+                  Loading incidents...
+                </strong>
+              ) : incidentsError ? (
+                <strong>
+                  Unable to load incidents
+                </strong>
+              ) : (
+                <select
+                  value={incidentId ?? ''}
+                  onChange={(event) =>
+                    handleIncidentChange(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    Select an incident
+                  </option>
+
+                  {incidents.map((incident) => (
+                    <option
+                      key={incident.id}
+                      value={incident.id}
+                    >
+                      {incident.id} — {incident.title}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {!incidentId &&
+            !incidentsLoading &&
+            !incidentsError && (
+              <div className="rca-page-state">
+                Select an incident to view its RCA reports.
+              </div>
+            )}
+
           {/* =========================
               Library Loading
           ========================== */}
 
-          {reportsLoading && (
+          {incidentId &&
+           reportsLoading && (
             <div className="rca-page-state">
               Loading RCA reports...
             </div>
@@ -256,7 +406,8 @@ function RCAReportsPage() {
               Library Error
           ========================== */}
 
-          {!reportsLoading &&
+          {incidentId &&
+           !reportsLoading &&
             reportsError && (
               <div className="rca-page-state rca-page-state-error">
                 <strong>
@@ -273,7 +424,8 @@ function RCAReportsPage() {
               Empty Library
           ========================== */}
 
-          {!reportsLoading &&
+          {incidentId &&
+           !reportsLoading &&
             !reportsError &&
             reports.length === 0 && (
               <div className="rca-page-empty">
@@ -290,7 +442,13 @@ function RCAReportsPage() {
                 </div>
 
                 <Link
-                  to={`/investigations?incident=${DEFAULT_INCIDENT_ID}`}
+                  to={
+                    incidentId
+                      ? `/investigations?incident=${encodeURIComponent(
+                          incidentId,
+                        )}`
+                      : '/incidents'
+                  }
                   className="investigate-button"
                 >
                   Start Investigation
@@ -302,7 +460,8 @@ function RCAReportsPage() {
               Report Rows
           ========================== */}
 
-          {!reportsLoading &&
+          { incidentId &&
+            !reportsLoading &&
             !reportsError &&
             reports.length > 0 && (
               <div className="rca-library">
@@ -413,7 +572,13 @@ function RCAReportsPage() {
               </div>
 
               <Link
-                to={`/investigations?incident=${DEFAULT_INCIDENT_ID}`}
+                to={
+                  incidentId
+                    ? `/investigations?incident=${encodeURIComponent(
+                        incidentId,
+                      )}`
+                    : '/investigations'
+                }
                 className="rca-back-link"
               >
                 ← Back to Investigations

@@ -46,7 +46,7 @@ function IncidentTable({
                     </span>
 
                     <span className="incident-description">
-                      Payment failures increased after deployment
+                      {incident.description}
                     </span>
                   </div>
                 </td>

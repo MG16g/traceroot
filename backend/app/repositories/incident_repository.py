@@ -22,3 +22,10 @@ class IncidentRepository:
         )
 
         return self.db.scalar(statement)
+
+    def get_all(self) -> list[IncidentModel]:
+        statement = select(IncidentModel).order_by(
+            IncidentModel.created_at.desc()
+        )
+
+        return list(self.db.scalars(statement).all())

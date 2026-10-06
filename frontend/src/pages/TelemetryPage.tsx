@@ -3,22 +3,34 @@ import {
   useState,
 } from 'react'
 
+import {
+  useSearchParams,
+} from 'react-router-dom'
+
 import Header from '../components/Header'
+
+import {
+  getIncidents,
+} from '../services/incidentService'
 
 import {
   getIncidentTelemetry,
 } from '../services/telemetryService'
 
 import type {
+  Incident,
+} from '../types/incident'
+
+import type {
   IncidentTelemetryResponse,
 } from '../types/telemetry'
+
 
 type TelemetryTab =
   | 'logs'
   | 'metrics'
   | 'deployments'
 
-const DEFAULT_INCIDENT_ID = 'INC-001'
 
 function formatTimestamp(
   timestamp: string,
@@ -32,7 +44,31 @@ function formatTimestamp(
   return date.toLocaleString()
 }
 
+
 function TelemetryPage() {
+  const [
+    searchParams,
+    setSearchParams,
+  ] = useSearchParams()
+
+  const requestedIncidentId =
+    searchParams.get('incident')
+
+  const [
+    incidents,
+    setIncidents,
+  ] = useState<Incident[]>([])
+
+  const [
+    incidentsLoading,
+    setIncidentsLoading,
+  ] = useState(true)
+
+  const [
+    incidentsError,
+    setIncidentsError,
+  ] = useState<string | null>(null)
+
   const [
     telemetry,
     setTelemetry,
@@ -55,17 +91,69 @@ function TelemetryPage() {
     setActiveTab,
   ] = useState<TelemetryTab>('logs')
 
+
+  // =========================
+  // Incident Discovery
+  // =========================
+
   useEffect(() => {
+    let cancelled = false
+
+    async function loadIncidents() {
+      setIncidentsLoading(true)
+      setIncidentsError(null)
+
+      try {
+        const result = await getIncidents()
+
+        if (!cancelled) {
+          setIncidents(result)
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setIncidents([])
+
+          setIncidentsError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Unable to load incidents.',
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setIncidentsLoading(false)
+        }
+      }
+    }
+
+    void loadIncidents()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+
+  // =========================
+  // Telemetry Load
+  // =========================
+
+  useEffect(() => {
+    if (!requestedIncidentId) {
+      return
+    }
+
     let cancelled = false
 
     async function loadTelemetry() {
       setLoading(true)
       setError(null)
+      setTelemetry(null)
 
       try {
         const result =
           await getIncidentTelemetry(
-            DEFAULT_INCIDENT_ID,
+            requestedIncidentId!,
           )
 
         if (!cancelled) {
@@ -93,7 +181,26 @@ function TelemetryPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [requestedIncidentId])
+
+
+  function handleIncidentChange(
+    incidentId: string,
+  ) {
+    setActiveTab('logs')
+    setTelemetry(null)
+    setError(null)
+
+    if (!incidentId) {
+      setSearchParams({})
+      return
+    }
+
+    setSearchParams({
+      incident: incidentId,
+    })
+  }
+
 
   return (
     <div className="dashboard-page">
@@ -103,10 +210,6 @@ function TelemetryPage() {
       />
 
       <div className="dashboard-content">
-        {/* =========================
-            Telemetry Overview
-        ========================== */}
-
         <section className="incidents-section">
           <div className="section-heading">
             <div>
@@ -115,7 +218,8 @@ function TelemetryPage() {
               </p>
 
               <h2>
-                {DEFAULT_INCIDENT_ID}
+                {requestedIncidentId ??
+                  'Telemetry Explorer'}
               </h2>
 
               <p>
@@ -134,6 +238,57 @@ function TelemetryPage() {
             )}
           </div>
 
+          {/* =========================
+              Incident Selector
+          ========================== */}
+
+          <div className="telemetry-catalog">
+            <div>
+              <span>Incident</span>
+
+              {incidentsLoading ? (
+                <strong>
+                  Loading incidents...
+                </strong>
+              ) : incidentsError ? (
+                <strong>
+                  Unable to load incidents
+                </strong>
+              ) : (
+                <select
+                  value={requestedIncidentId ?? ''}
+                  onChange={(event) =>
+                    handleIncidentChange(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    Select an incident
+                  </option>
+
+                  {incidents.map((incident) => (
+                    <option
+                      key={incident.id}
+                      value={incident.id}
+                    >
+                      {incident.id} — {incident.title}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {!requestedIncidentId &&
+            !incidentsLoading &&
+            !incidentsError && (
+              <div className="telemetry-state">
+                Select an incident to inspect its
+                telemetry.
+              </div>
+            )}
+
           {loading && (
             <div className="telemetry-state">
               Loading telemetry...
@@ -150,7 +305,8 @@ function TelemetryPage() {
             </div>
           )}
 
-          {!loading &&
+          {requestedIncidentId &&
+            !loading &&
             !error &&
             telemetry && (
               <>
@@ -404,28 +560,37 @@ function TelemetryPage() {
                     Deployments
                 ========================== */}
 
-                {activeTab === 'deployments' && (
+                {activeTab ===
+                  'deployments' && (
                   <div className="telemetry-record-list">
-                    {telemetry.deployments.length === 0 ? (
+                    {telemetry.deployments.length ===
+                    0 ? (
                       <div className="telemetry-state">
-                        No deployment telemetry available.
+                        No deployment telemetry
+                        available.
                       </div>
                     ) : (
                       telemetry.deployments.map(
                         (deployment) => (
                           <article
-                            key={deployment.deployment_id}
+                            key={
+                              deployment.deployment_id
+                            }
                             className="telemetry-record telemetry-deployment-record"
                           >
                             <div className="telemetry-record-header">
                               <strong>
-                                {deployment.service}
+                                {
+                                  deployment.service
+                                }
                               </strong>
 
                               <span
                                 className={`telemetry-deployment-status telemetry-deployment-status-${deployment.status.toLowerCase()}`}
                               >
-                                {deployment.status}
+                                {
+                                  deployment.status
+                                }
                               </span>
 
                               <time>
@@ -454,7 +619,9 @@ function TelemetryPage() {
                                 </span>
 
                                 <strong>
-                                  {deployment.version}
+                                  {
+                                    deployment.version
+                                  }
                                 </strong>
                               </div>
 
@@ -464,7 +631,9 @@ function TelemetryPage() {
                                 </span>
 
                                 <strong>
-                                  {deployment.service}
+                                  {
+                                    deployment.service
+                                  }
                                 </strong>
                               </div>
 
@@ -474,7 +643,9 @@ function TelemetryPage() {
                                 </span>
 
                                 <strong>
-                                  {deployment.status}
+                                  {
+                                    deployment.status
+                                  }
                                 </strong>
                               </div>
                             </div>
