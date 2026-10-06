@@ -1,0 +1,16 @@
+[
+  {
+    "deployment_id": "DEP-2001",
+    "service": "inventory-service",
+    "version": "3.9.0",
+    "timestamp": "2026-09-19T10:15:00Z",
+    "status": "success"
+  },
+  {
+    "deployment_id": "DEP-2002",
+    "service": "checkout-service",
+    "version": "5.2.1",
+    "timestamp": "2026-09-19T09:30:00Z",
+    "status": "success"
+  }
+]

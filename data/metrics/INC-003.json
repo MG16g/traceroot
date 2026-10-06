@@ -1,0 +1,51 @@
+[
+  {
+    "timestamp": "2026-09-20T16:30:00Z",
+    "service": "checkout-service",
+    "metric": "request_latency_p95",
+    "value": 240.0,
+    "unit": "milliseconds"
+  },
+  {
+    "timestamp": "2026-09-20T16:35:00Z",
+    "service": "checkout-service",
+    "metric": "request_latency_p95",
+    "value": 510.0,
+    "unit": "milliseconds"
+  },
+  {
+    "timestamp": "2026-09-20T16:38:00Z",
+    "service": "checkout-service",
+    "metric": "request_latency_p95",
+    "value": 940.0,
+    "unit": "milliseconds"
+  },
+  {
+    "timestamp": "2026-09-20T16:40:00Z",
+    "service": "checkout-service",
+    "metric": "request_latency_p95",
+    "value": 1680.0,
+    "unit": "milliseconds"
+  },
+  {
+    "timestamp": "2026-09-20T16:43:00Z",
+    "service": "checkout-service",
+    "metric": "request_latency_p95",
+    "value": 2310.0,
+    "unit": "milliseconds"
+  },
+  {
+    "timestamp": "2026-09-20T16:38:00Z",
+    "service": "payment-service",
+    "metric": "authorization_latency_p95",
+    "value": 1260.0,
+    "unit": "milliseconds"
+  },
+  {
+    "timestamp": "2026-09-20T16:43:00Z",
+    "service": "checkout-service",
+    "metric": "checkout_timeout_rate",
+    "value": 18.0,
+    "unit": "percent"
+  }
+]
