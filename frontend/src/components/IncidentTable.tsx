@@ -3,12 +3,14 @@ import type { Incident } from '../types/incident'
 type IncidentTableProps = {
   incidents: Incident[]
   investigatingIncidentId?: string | null
+  onViewDetails?: (incidentId: string) => void
   onInvestigate: (incidentId: string) => void
 }
 
 function IncidentTable({
   incidents,
   investigatingIncidentId,
+  onViewDetails,
   onInvestigate,
 }: IncidentTableProps) {
   return (
@@ -76,25 +78,32 @@ function IncidentTable({
                 </td>
 
                 <td className="incident-action-cell">
-                  <button
-                    type="button"
-                    className="investigate-button"
-                    disabled={isInvestigating}
-                    onClick={() =>
-                      onInvestigate(incident.id)
-                    }
-                  >
-                    <span
-                      className="investigate-play"
-                      aria-hidden="true"
-                    >
-                      ▶
-                    </span>
+                  <div className="incident-row-actions">
+                    {onViewDetails && (
+                      <button
+                        type="button"
+                        className="incident-details-button"
+                        onClick={() =>
+                          onViewDetails(incident.id)
+                        }
+                      >
+                        View Details
+                      </button>
+                    )}
 
-                    {isInvestigating
-                      ? 'Investigating...'
-                      : 'Investigate'}
-                  </button>
+                    <button
+                      type="button"
+                      className="investigate-button"
+                      disabled={isInvestigating}
+                      onClick={() =>
+                        onInvestigate(incident.id)
+                      }
+                    >
+                      {isInvestigating
+                        ? 'Investigating...'
+                        : 'Investigate'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             )

@@ -1,4 +1,4 @@
-from datetime import datetime,timezone
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel,Field
@@ -16,6 +16,28 @@ class IncidentStatus(str, Enum):
     INVESTIGATING = "investigating"
     RESOLVED = "resolved"
 
+
+class IncidentCreate(BaseModel):
+    id: str = Field(
+        min_length=3,
+        max_length=50,
+    )
+    title: str = Field(
+        min_length=3,
+        max_length=200,
+    )
+    description: str = Field(
+        min_length=3,
+    )
+    service: str = Field(
+        min_length=2,
+        max_length=100,
+    )
+    severity: IncidentSeverity
+    status: IncidentStatus = IncidentStatus.OPEN
+
+class IncidentStatusUpdate(BaseModel):
+    status: IncidentStatus
 
 class Incident(BaseModel):
     id:str

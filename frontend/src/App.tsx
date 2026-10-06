@@ -6,6 +6,7 @@ import IncidentsPage from './pages/IncidentsPage'
 import InvestigationsPage from './pages/InvestigationsPage'
 import RCAReportsPage from './pages/RCAReportsPage'
 import TelemetryPage from './pages/TelemetryPage'
+import IncidentDetailsPage from './pages/IncidentDetailsPage'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/incidents" element={<IncidentsPage />} />
+        <Route path="/incidents/:incidentId" element={<IncidentDetailsPage />} />
         <Route path="/investigations" element={<InvestigationsPage />} />
         <Route path="/rca-reports" element={<RCAReportsPage />} />
         <Route path="/telemetry" element={<TelemetryPage />} />

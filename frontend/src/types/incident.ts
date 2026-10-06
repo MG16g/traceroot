@@ -9,6 +9,15 @@ export type IncidentStatus =
   | 'investigating'
   | 'resolved'
 
+export type IncidentCreateRequest = {
+  id: string
+  title: string
+  description: string
+  service: string
+  severity: IncidentSeverity
+  status: IncidentStatus
+}
+
 export type Incident = {
   id: string
   title: string

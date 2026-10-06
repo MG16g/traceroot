@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 
 import Header from '../components/Header'
 import IncidentTable from '../components/IncidentTable'
+import CreateIncidentForm from '../components/CreateIncidentForm'
 
-import { getIncidents } from '../services/incidentService'
+import { createIncident, getIncidents } from '../services/incidentService'
 
-import type { Incident } from '../types/incident'
+import type { Incident, IncidentCreateRequest, } from '../types/incident'
 
 
 function IncidentsPage() {
@@ -15,6 +16,14 @@ function IncidentsPage() {
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const [isCreating, setIsCreating] = useState(false)
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false)
+
+  const [createError, setCreateError] =
+    useState<string | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -61,6 +70,43 @@ function IncidentsPage() {
     )
   }
 
+  function handleViewDetails(
+    incidentId: string,
+  ) {
+    navigate(
+      `/incidents/${encodeURIComponent(
+        incidentId,
+      )}`,
+    )
+  }
+
+  async function handleCreateIncident(
+    payload: IncidentCreateRequest,
+  ) {
+    try {
+      setIsSubmitting(true)
+      setCreateError(null)
+
+      const createdIncident =
+        await createIncident(payload)
+
+      setIncidents((currentIncidents) => [
+        createdIncident,
+        ...currentIncidents,
+      ])
+
+      setIsCreating(false)
+    } catch (createIncidentError) {
+      setCreateError(
+        createIncidentError instanceof Error
+          ? createIncidentError.message
+          : 'Unable to create incident.',
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="dashboard-page">
       <Header
@@ -81,13 +127,39 @@ function IncidentsPage() {
               </h2>
             </div>
 
-            {!isLoading && !error && (
-              <span className="section-meta">
-                {incidents.length} incident
-                {incidents.length === 1 ? '' : 's'}
-              </span>
-            )}
+            <div className="incident-heading-actions">
+              {!isLoading && !error && (
+                <span className="section-meta">
+                  {incidents.length} incident
+                  {incidents.length === 1 ? '' : 's'}
+                </span>
+              )}
+
+              <button
+                type="button"
+                className="create-incident-button"
+                onClick={() => {
+                  setCreateError(null)
+                  setIsCreating(true)
+                }}
+                disabled={isCreating}
+              >
+                + Create Incident
+              </button>
+            </div>
           </div>
+
+          {isCreating && (
+            <CreateIncidentForm
+              isSubmitting={isSubmitting}
+              error={createError}
+              onSubmit={handleCreateIncident}
+              onCancel={() => {
+                setCreateError(null)
+                setIsCreating(false)
+              }}
+            />
+          )}
 
           {isLoading && (
             <p className="section-meta">
@@ -116,10 +188,11 @@ function IncidentsPage() {
           {!isLoading &&
             !error &&
             incidents.length > 0 && (
-              <IncidentTable
-                incidents={incidents}
-                onInvestigate={handleInvestigate}
-              />
+             <IncidentTable
+              incidents={incidents}
+              onViewDetails={handleViewDetails}
+              onInvestigate={handleInvestigate}
+            />
             )}
         </section>
       </div>

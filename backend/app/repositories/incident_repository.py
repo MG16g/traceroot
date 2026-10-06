@@ -29,3 +29,15 @@ class IncidentRepository:
         )
 
         return list(self.db.scalars(statement).all())
+
+    def update_status(
+        self,
+        incident: IncidentModel,
+        status: str,
+    ) -> IncidentModel:
+        incident.status = status
+
+        self.db.commit()
+        self.db.refresh(incident)
+
+        return incident
