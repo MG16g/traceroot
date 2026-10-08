@@ -241,14 +241,16 @@ h1 {
 }
 
 .nav-item:hover {
-  background: #f5f8fd;
+  background: rgba(148, 163, 184, 0.10);
   color: var(--text-primary);
+  border-color: rgba(148, 163, 184, 0.12);
 }
 
-.nav-item-active {
-  background: var(--accent-soft);
-  border-color: #d9e7ff;
-  color: var(--accent);
+.nav-item-active,
+.nav-item-active:hover {
+  background: rgba(59, 130, 246, 0.13);
+  border-color: rgba(59, 130, 246, 0.22);
+  color: #93c5fd;
 }
 
 .nav-item-active::before {
@@ -281,6 +283,21 @@ h1 {
   color: var(--accent);
 }
 
+.nav-item:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 3px;
+}
+
+.nav-icon {
+  flex-shrink: 0;
+}
+
+.nav-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
 .sidebar-footer {
   padding: 14px;
   border-top: 1px solid var(--border-primary);
@@ -299,9 +316,9 @@ h1 {
   height: 7px;
 
   border-radius: 50%;
-  background: var(--success);
+  background: var(--text-muted);
 
-  box-shadow: 0 0 0 3px rgb(34 197 94 / 10%);
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.10);
 }
 
 .status-title {
@@ -5873,5 +5890,830 @@ button:disabled {
     width: 100%;
 
     justify-content: center;
+  }
+}
+
+
+
+/* =========================================
+   Day 19 — Responsive Workspace Foundation
+========================================= */
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    position: relative;
+    inset: auto;
+
+    width: 100%;
+    height: auto;
+
+    border-right: none;
+    border-bottom: 1px solid var(--border-primary);
+  }
+
+  .sidebar-brand {
+    min-height: 64px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    overflow-x: auto;
+    padding: 12px 16px;
+  }
+
+  .nav-section-label {
+    display: none;
+  }
+
+  .nav-item {
+    flex-shrink: 0;
+    min-height: 40px;
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .nav-item-active::before {
+    display: none;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .main-content {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    padding: 16px;
+  }
+}
+
+
+/* ==========================================
+   Day 19 - Incidents Workspace Refinements
+   ========================================== */
+
+.incident-table tbody tr:not(:last-child) td {
+  border-bottom: 1px solid #edf1f7;
+}
+
+.incident-table tbody tr:hover {
+  background-color: #f7faff;
+}
+
+.incident-table th,
+.incident-table td {
+  vertical-align: middle;
+}
+
+.incident-table button:focus-visible {
+  outline: 2px solid #1976ff;
+  outline-offset: 3px;
+}
+
+.incident-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd8e8 transparent;
+}
+
+
+/* Day 19 — Investigation workspace navigation */
+
+.investigation-workspace-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.investigation-view-incident-button {
+  padding: 8px 14px;
+  border: 1px solid #d5e0ee;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #415570;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.investigation-view-incident-button:hover {
+  border-color: #1976ff;
+  background: #f3f8ff;
+  color: #0869f5;
+}
+
+.investigation-view-incident-button:focus-visible {
+  outline: 2px solid #1976ff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .investigation-workspace-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .investigation-workspace-actions button {
+    flex: 1;
+  }
+}
+
+/* ==========================================
+   Day 19 — Investigations Empty State
+   ========================================== */
+
+.investigation-empty-workspace {
+  padding: 26px;
+}
+
+.investigation-empty-header {
+  padding-bottom: 22px;
+  border-bottom: 1px solid #e8eef7;
+}
+
+.investigation-empty-header h2 {
+  margin: 6px 0;
+  color: #17243a;
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.investigation-empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  margin-top: 22px;
+  padding: 40px 24px;
+  border: 1px dashed #d6e3f5;
+  border-radius: 14px;
+  background: #f8fbff;
+  text-align: center;
+}
+
+.investigation-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 66px;
+  height: 66px;
+  margin-bottom: 20px;
+  border-radius: 18px;
+  background: #e8f1ff;
+  color: #0869f5;
+}
+
+.investigation-empty-content h3 {
+  margin: 0 0 10px;
+  color: #17243a;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.investigation-empty-content p {
+  max-width: 440px;
+  margin: 0 0 24px;
+  color: #667892;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.investigation-empty-content .investigate-button {
+  min-height: 40px;
+  padding: 10px 18px;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .investigation-empty-workspace {
+    padding: 18px;
+  }
+
+  .investigation-empty-content {
+    min-height: 300px;
+    padding: 32px 16px;
+  }
+
+  .investigation-empty-content h3 {
+    font-size: 17px;
+  }
+}
+
+
+/* ==========================================
+   Day 19 — RCA Markdown Report Styling
+   ========================================== */
+
+.rca-markdown {
+  color: #24364f;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.rca-markdown h1,
+.rca-markdown h2,
+.rca-markdown h3 {
+  color: #17243a;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.rca-markdown h1 {
+  margin: 24px 0 14px;
+  font-size: 21px;
+}
+
+.rca-markdown h2 {
+  margin: 22px 0 12px;
+  font-size: 18px;
+}
+
+.rca-markdown h3 {
+  margin: 18px 0 10px;
+  font-size: 15px;
+}
+
+.rca-markdown > :first-child {
+  margin-top: 0;
+}
+
+.rca-markdown p {
+  margin: 10px 0 14px;
+}
+
+.rca-markdown ul,
+.rca-markdown ol {
+  margin: 10px 0 16px;
+  padding-left: 24px;
+}
+
+.rca-markdown li {
+  margin-bottom: 6px;
+}
+
+.rca-markdown strong {
+  color: #17243a;
+  font-weight: 700;
+}
+
+.rca-markdown code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #edf3fb;
+  color: #1559b5;
+  font-size: 0.9em;
+}
+
+.rca-markdown pre {
+  padding: 14px;
+  border: 1px solid #dce6f3;
+  border-radius: 8px;
+  background: #f5f8fd;
+  overflow-x: auto;
+}
+
+.rca-markdown pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.rca-markdown table {
+  width: 100%;
+  margin: 16px 0;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+
+.rca-markdown th,
+.rca-markdown td {
+  padding: 10px 12px;
+  border: 1px solid #dce6f3;
+  text-align: left;
+}
+
+.rca-markdown th {
+  background: #f3f7fc;
+  font-weight: 700;
+}
+
+.rca-markdown blockquote {
+  margin: 14px 0;
+  padding: 10px 16px;
+  border-left: 3px solid #1976ff;
+  background: #f6f9ff;
+}
+
+.rca-markdown a {
+  color: #0869f5;
+  text-decoration: underline;
+}
+
+
+/* ==========================================
+   Day 19 — RCA Markdown Spacing Fix
+   ========================================== */
+
+.rca-report-content.rca-markdown {
+  display: block;
+  padding: 22px 24px;
+  line-height: 1.65;
+}
+
+/* Headings */
+.rca-report-content.rca-markdown h1,
+.rca-report-content.rca-markdown h2,
+.rca-report-content.rca-markdown h3,
+.rca-report-content.rca-markdown h4 {
+  margin: 20px 0 10px;
+  padding: 0;
+  line-height: 1.4;
+}
+
+/* Paragraphs */
+.rca-report-content.rca-markdown p {
+  margin: 0 0 12px;
+  padding: 0;
+  line-height: 1.7;
+}
+
+/* Lists */
+.rca-report-content.rca-markdown ul,
+.rca-report-content.rca-markdown ol {
+  margin: 8px 0 14px;
+  padding-left: 24px;
+  display: block;
+}
+
+.rca-report-content.rca-markdown li {
+  display: list-item;
+  margin: 4px 0;
+  padding: 0;
+  line-height: 1.65;
+}
+
+/* Nested lists */
+.rca-report-content.rca-markdown li > ul,
+.rca-report-content.rca-markdown li > ol {
+  margin: 4px 0 8px;
+}
+
+/* Text inside list items */
+.rca-report-content.rca-markdown li > p {
+  margin: 0 0 5px;
+}
+
+/* Avoid extra spacing at the beginning and end */
+.rca-report-content.rca-markdown > :first-child {
+  margin-top: 0;
+}
+
+.rca-report-content.rca-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .rca-report-content.rca-markdown {
+    padding: 16px;
+  }
+}
+
+
+/* ==========================================
+   Day 19 — RCA Report Library Selector
+   ========================================== */
+
+.telemetry-catalog:has(select) {
+  width: 100%;
+  max-width: 600px;
+  padding: 16px 18px;
+  border: 1px solid #dce6f3;
+  border-radius: 12px;
+  background: #f8fbff;
+  box-sizing: border-box;
+}
+
+.telemetry-catalog:has(select) > div {
+  width: 100%;
+  min-width: 0;
+}
+
+.telemetry-catalog:has(select) span {
+  display: block;
+  margin-bottom: 8px;
+  color: #526681;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.telemetry-catalog:has(select) select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #cbd9ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17243a;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.telemetry-catalog:has(select) select:focus-visible {
+  outline: 2px solid #1976ff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .telemetry-catalog:has(select) {
+    max-width: 100%;
+    padding: 12px;
+  }
+}
+
+
+/* ==========================================
+   Day 19 — RCA Reports Empty State
+   ========================================== */
+
+.rca-page-state.rca-library-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  margin-top: 22px;
+  padding: 36px 24px;
+  border: 1px dashed #d6e3f5;
+  border-radius: 14px;
+  background: #f8fbff;
+  text-align: center;
+}
+
+.rca-library-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 18px;
+  border-radius: 18px;
+  background: #e8f1ff;
+  color: #0869f5;
+}
+
+.rca-library-empty-state h3 {
+  margin: 0 0 10px;
+  color: #17243a;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.rca-library-empty-state p {
+  max-width: 460px;
+  margin: 0;
+  color: #667892;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+  .rca-page-state.rca-library-empty-state {
+    min-height: 240px;
+    padding: 28px 16px;
+  }
+
+  .rca-library-empty-state h3 {
+    font-size: 17px;
+  }
+}
+
+
+/* ==========================================
+   Day 19 — Telemetry Explorer Empty State
+   ========================================== */
+
+.telemetry-state.telemetry-explorer-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  margin-top: 22px;
+  padding: 36px 24px;
+  border: 1px dashed #d6e3f5;
+  border-radius: 14px;
+  background: #f8fbff;
+  text-align: center;
+}
+
+.telemetry-explorer-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 18px;
+  border-radius: 18px;
+  background: #e8f1ff;
+  color: #0869f5;
+}
+
+.telemetry-explorer-empty h3 {
+  margin: 0 0 10px;
+  color: #17243a;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.telemetry-explorer-empty p {
+  max-width: 460px;
+  margin: 0;
+  color: #667892;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+  .telemetry-state.telemetry-explorer-empty {
+    min-height: 240px;
+    padding: 28px 16px;
+  }
+
+  .telemetry-explorer-empty h3 {
+    font-size: 17px;
+  }
+}
+
+
+/* ==========================================
+   Day 19 — Telemetry Summary Cards Polish
+   ========================================== */
+
+.telemetry-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.telemetry-summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #e0e9f5;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgba(20, 45, 85, 0.035);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.telemetry-summary-card:hover {
+  border-color: #a9c8f7;
+  box-shadow: 0 6px 18px rgba(20, 65, 130, 0.07);
+}
+
+.telemetry-summary-card > span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.telemetry-summary-card > strong {
+  color: #17243a;
+  font-size: 30px;
+  font-weight: 750;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1024px) {
+  .telemetry-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .telemetry-summary-grid {
+    gap: 10px;
+  }
+
+  .telemetry-summary-card {
+    padding: 16px;
+  }
+
+  .telemetry-summary-card > strong {
+    font-size: 25px;
+  }
+}
+
+
+/* ==========================================
+   Day 19 — Telemetry Tabs UI Polish
+   ========================================== */
+
+.telemetry-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 18px;
+  padding: 6px;
+  border: 1px solid #e0e9f5;
+  border-radius: 12px;
+  background: #f3f7fd;
+}
+
+.telemetry-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.telemetry-tab:hover {
+  background: #e7effb;
+  color: #175cd3;
+}
+
+.telemetry-tab.telemetry-tab-active {
+  border-color: #cbdffb;
+  background: #ffffff;
+  color: #0869f5;
+  box-shadow: 0 2px 8px rgba(20, 65, 130, 0.08);
+}
+
+.telemetry-tab:focus-visible {
+  outline: 2px solid #0869f5;
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .telemetry-tabs {
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .telemetry-tab {
+    flex: 1 1 auto;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+
+/* ==========================================
+   Day 19 — Telemetry Records UI Polish
+   ========================================== */
+
+.telemetry-record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.telemetry-record {
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid #e0e9f5;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(20, 45, 85, 0.025);
+  transition: border-color 0.2s ease;
+}
+
+.telemetry-record:hover {
+  border-color: #b9d2f7;
+}
+
+.telemetry-record-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.telemetry-record-header > strong {
+  color: #17243a;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.telemetry-record-header > time {
+  margin-left: auto;
+  color: #718096;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.telemetry-record > p {
+  margin: 0;
+  color: #40536d;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.telemetry-record-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid #dbe7f6;
+  border-radius: 6px;
+  background: #f0f6ff;
+  color: #245ea8;
+  font-size: 11px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.telemetry-metric-value {
+  color: #17243a;
+  font-size: 23px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.telemetry-deployment-details {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #edf1f7;
+}
+
+.telemetry-deployment-details > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.telemetry-deployment-details span {
+  color: #718096;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.telemetry-deployment-details strong {
+  color: #263b57;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .telemetry-record {
+    padding: 15px;
+  }
+
+  .telemetry-record-header > time {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .telemetry-deployment-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -15,11 +15,20 @@ from app.core.database import Base
 # access to the values within the .ini file in use.
 config = context.config
 
+import os
+
+from tests.db_safety import validate_test_database_url
+
+
+if os.getenv("TRACEROOT_TEST_MIGRATION") == "1":
+    database_url = validate_test_database_url()
+else:
+    database_url = settings.database_url
+
 config.set_main_option(
     "sqlalchemy.url",
-    settings.database_url.replace("%","%%"),
+    database_url.replace("%", "%%"),
 )
-
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -75,8 +84,33 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        if os.getenv("TRACEROOT_TEST_MIGRATION") == "1":
+            from sqlalchemy import text
+
+            result = connection.execute(
+                text("SELECT current_database(), current_user")
+            ).one()
+
+            database_name, username = result
+
+            print("Alembic target database:", database_name)
+            print("Alembic target user:", username)
+
+            if (
+                database_name != "traceroot_test_db"
+                or username != "traceroot_test_user"
+            ):
+                raise RuntimeError(
+                    "Unsafe Alembic test migration target."
+                )
+
+            # End the read-only verification transaction.
+            # Alembic can then manage its migration transaction.
+            connection.rollback()
+
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
         )
 
         with context.begin_transaction():

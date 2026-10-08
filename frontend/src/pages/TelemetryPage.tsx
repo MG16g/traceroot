@@ -283,9 +283,34 @@ function TelemetryPage() {
           {!requestedIncidentId &&
             !incidentsLoading &&
             !incidentsError && (
-              <div className="telemetry-state">
-                Select an incident to inspect its
-                telemetry.
+              <div className="telemetry-state telemetry-explorer-empty">
+                <div
+                  className="telemetry-explorer-empty-icon"
+                  aria-hidden="true"
+                >
+                  <svg
+                    width="30"
+                    height="30"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 3v18h18" />
+                    <path d="m7 16 4-5 3 3 5-7" />
+                    <path d="M17 7h2v2" />
+                  </svg>
+                </div>
+
+                <h3>Explore Incident Telemetry</h3>
+
+                <p>
+                  Select an incident above to inspect its logs,
+                  metrics, deployment history, and service
+                  activity.
+                </p>
               </div>
             )}
 

@@ -375,7 +375,7 @@ function RCAReportsPage() {
                       key={incident.id}
                       value={incident.id}
                     >
-                      {incident.id} — {incident.title}
+                      {incident.id} {'—'} {incident.title}
                     </option>
                   ))}
                 </select>
@@ -386,8 +386,31 @@ function RCAReportsPage() {
           {!incidentId &&
             !incidentsLoading &&
             !incidentsError && (
-              <div className="rca-page-state">
-                Select an incident to view its RCA reports.
+              <div className="rca-page-state rca-library-empty-state">
+                <div className="rca-library-empty-icon" aria-hidden="true">
+                  <svg
+                    width="30"
+                    height="30"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8l-5-5h-4" />
+                    <path d="M16 3v5h5" />
+                    <path d="M8 13h8M8 17h6" />
+                  </svg>
+                </div>
+
+                <h3>Explore Root Cause Reports</h3>
+
+                <p>
+                  Select an incident above to review investigation
+                  findings, supporting evidence, and root-cause
+                  analysis reports.
+                </p>
               </div>
             )}
 

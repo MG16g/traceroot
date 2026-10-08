@@ -1,4 +1,6 @@
 import type { RCAReportSummary } from '../types/investigation'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type RCAReportViewProps = {
   report: RCAReportSummary
@@ -398,9 +400,11 @@ function RCAReportView({
         </div>
 
         {report.final_report ? (
-          <pre className="rca-report-content">
-            {report.final_report}
-          </pre>
+          <div className="rca-report-content rca-markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {report.final_report}
+            </ReactMarkdown>
+          </div>
         ) : (
           <p className="rca-empty-copy">
             No detailed RCA report was

@@ -32,11 +32,52 @@ function CreateIncidentForm({
   ) {
     event.preventDefault()
 
+    const trimmedId = id.trim()
+    const trimmedTitle = title.trim()
+    const trimmedDescription = description.trim()
+    const trimmedService = service.trim()
+
+    const form = event.currentTarget
+
+    const fields = [
+      { value: trimmedId, element: form.elements.namedItem('id') },
+      { value: trimmedTitle, element: form.elements.namedItem('title') },
+      { value: trimmedService, element: form.elements.namedItem('service') },
+      {
+        value: trimmedDescription,
+        element: form.elements.namedItem('description'),
+      },
+    ]
+
+    for (const field of fields) {
+      if (
+        !field.value &&
+        field.element instanceof HTMLInputElement
+      ) {
+        field.element.setCustomValidity(
+          'This field cannot contain only spaces.',
+        )
+        field.element.reportValidity()
+        return
+      }
+
+      if (
+        !field.value &&
+        field.element instanceof HTMLTextAreaElement
+      ) {
+        field.element.setCustomValidity(
+          'This field cannot contain only spaces.',
+        )
+        field.element.reportValidity()
+        return
+      }
+    }
+
     const payload: IncidentCreateRequest = {
-      id: id.trim(),
-      title: title.trim(),
-      description: description.trim(),
-      service: service.trim(),
+      id: trimmedId,
+      title: trimmedTitle,
+      description: trimmedDescription,
+      service: trimmedService,
       severity,
       status: 'open',
     }
@@ -68,15 +109,17 @@ function CreateIncidentForm({
           Incident ID
           <input
             type="text"
+            name="id"
             value={id}
             placeholder="INC-005"
             minLength={3}
             maxLength={50}
             required
             disabled={isSubmitting}
-            onChange={(event) =>
+            onChange={(event) =>{
+              event.currentTarget.setCustomValidity('')
               setId(event.target.value)
-            }
+            }}
           />
         </label>
 
@@ -84,15 +127,17 @@ function CreateIncidentForm({
           Title
           <input
             type="text"
+            name="title"
             value={title}
             placeholder="Order processing failures"
             minLength={3}
             maxLength={200}
             required
             disabled={isSubmitting}
-            onChange={(event) =>
+            onChange={(event) =>{
+              event.currentTarget.setCustomValidity('')
               setTitle(event.target.value)
-            }
+            }}
           />
         </label>
 
@@ -100,15 +145,17 @@ function CreateIncidentForm({
           Service
           <input
             type="text"
+            name="service"
             value={service}
             placeholder="order-service"
             minLength={2}
             maxLength={100}
             required
             disabled={isSubmitting}
-            onChange={(event) =>
+            onChange={(event) =>{
+              event.currentTarget.setCustomValidity('')
               setService(event.target.value)
-            }
+            }}
           />
         </label>
 
@@ -137,14 +184,16 @@ function CreateIncidentForm({
         <label className="create-incident-description">
           Description
           <textarea
+            name="description"
             value={description}
             placeholder="Describe the production impact..."
             minLength={3}
             required
             disabled={isSubmitting}
-            onChange={(event) =>
+            onChange={(event) =>{
+              event.currentTarget.setCustomValidity('')
               setDescription(event.target.value)
-            }
+            }}
           />
         </label>
 

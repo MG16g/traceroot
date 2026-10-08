@@ -74,7 +74,20 @@ function InvestigationHistory({
             className="history-heading-icon"
             aria-hidden="true"
           >
-            ◷
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 3v6h6" />
+              <path d="M12 7v5l3 2" />
+            </svg>
           </div>
 
           <div>
@@ -146,7 +159,19 @@ function InvestigationHistory({
                     className="history-calendar"
                     aria-hidden="true"
                   >
-                    ▣
+                    <svg
+                      width="19"
+                      height="19"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="5" width="18" height="16" rx="2" />
+                      <path d="M7 3v4M17 3v4M3 10h18" />
+                    </svg>
                   </div>
 
                   <div className="history-time">
@@ -178,19 +203,16 @@ function InvestigationHistory({
 
                     <div className="history-run-meta">
                       <span>
-                        ↻ {item.iteration}{' '}
-                        {item.iteration === 1
-                          ? 'iteration'
-                          : 'iterations'}
+                        {item.iteration}{' '}
+                        {item.iteration === 1 ? 'iteration' : 'iterations'}
                       </span>
 
                       <span>
-                        ☷ Step:{' '}
-                        {item.current_step}
+                        Step: {item.current_step}
                       </span>
 
                       <span>
-                        ◇ {item.incident_id}
+                        {item.incident_id}
                       </span>
                     </div>
                   </div>
@@ -256,7 +278,19 @@ function InvestigationHistory({
                         )
                       }
                     >
-                      →
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                      </svg>
                     </button>
                   </div>
                 </article>

@@ -2,7 +2,7 @@ type StatCardTone = 'default' | 'critical' | 'warning' | 'success'
 
 type StatCardProps = {
   label: string
-  value: number
+  value: number | string
   detail: string
   tone?: StatCardTone
 }

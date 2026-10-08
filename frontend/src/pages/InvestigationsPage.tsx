@@ -513,23 +513,30 @@ function InvestigationsPage() {
                 </h2>
               </div>
 
-              <button
-                type="button"
-                className="investigate-button"
-                disabled={
-                  investigatingIncidentId !==
-                  null
-                }
-                onClick={() =>
-                  handleInvestigate(
-                    requestedIncidentId,
-                  )
-                }
-              >
-                {investigatingIncidentId
-                  ? 'Investigating...'
-                  : 'Start Investigation'}
-              </button>
+              <div className="investigation-workspace-actions">
+                <button
+                  type="button"
+                  className="investigation-view-incident-button"
+                  onClick={() =>
+                    navigate(
+                      `/incidents/${encodeURIComponent(requestedIncidentId)}`
+                    )
+                  }
+                >
+                  View Incident
+                </button>
+
+                <button
+                  type="button"
+                  className="investigate-button"
+                  disabled={investigatingIncidentId !== null}
+                  onClick={() => handleInvestigate(requestedIncidentId)}
+                >
+                  {investigatingIncidentId
+                    ? 'Investigating...'
+                    : 'Start Investigation'}
+                </button>
+              </div>
             </div>
 
             {/* =========================
@@ -556,23 +563,50 @@ function InvestigationsPage() {
         ========================== */}
 
         {!requestedIncidentId && (
-          <section className="incidents-section">
-            <div className="section-heading">
+          <section className="incidents-section investigation-empty-workspace">
+            <div className="investigation-empty-header">
               <div>
-                <p className="eyebrow">
-                  Investigation Workspace
-                </p>
-
-                <h2>
-                  Investigations
-                </h2>
-
-                <p>
-                  Select an incident from the
-                  Incidents page to start a new
-                  investigation.
+                <p className="eyebrow">Investigation Workspace</p>
+                <h2>Incident Investigations</h2>
+                <p className="section-meta">
+                  AI-assisted incident analysis and root-cause discovery.
                 </p>
               </div>
+            </div>
+
+            <div className="investigation-empty-content">
+              <div className="investigation-empty-icon" aria-hidden="true">
+                <svg
+                  width="30"
+                  height="30"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="10.5" cy="10.5" r="6.5" />
+                  <path d="m16 16 5 5" />
+                  <path d="m7.5 11 2 2 4-5" />
+                </svg>
+              </div>
+
+              <h3>Ready to investigate an incident?</h3>
+
+              <p>
+                Select a production incident to analyze telemetry,
+                evaluate hypotheses, and identify its root cause.
+              </p>
+
+              <button
+                type="button"
+                className="investigate-button"
+                onClick={() => navigate('/incidents')}
+              >
+                Browse Incidents
+                <span aria-hidden="true">→</span>
+              </button>
             </div>
           </section>
         )}

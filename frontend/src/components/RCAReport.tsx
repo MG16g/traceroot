@@ -1,3 +1,6 @@
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+
 type RCAReportProps = {
   report: string | null
   incidentId: string
@@ -38,8 +41,10 @@ function RCAReport({
             </span>
           </div>
 
-          <div className="rca-report-content">
-            {report}
+          <div className="rca-report-content rca-markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {report}
+            </ReactMarkdown>
           </div>
         </article>
       ) : (

@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import patch
 from datetime import datetime, timezone
 
@@ -27,10 +28,24 @@ def override_get_db():
     yield fake_db
 
 
-app.dependency_overrides[get_db] = override_get_db
+
+@pytest.fixture(autouse=True)
+def isolated_database_override():
+    previous_override = app.dependency_overrides.get(get_db)
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        yield
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_db, None)
+        else:
+            app.dependency_overrides[get_db] = previous_override
 
 
 client = TestClient(app)
+
 
 
 # -------------------------------------------------------------------
