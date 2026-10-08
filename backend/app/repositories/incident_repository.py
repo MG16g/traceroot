@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.incident import IncidentModel
 
@@ -10,11 +11,16 @@ class IncidentRepository:
         self.db = db
 
     def create(self, incident: IncidentModel) -> IncidentModel:
-        self.db.add(incident)
-        self.db.commit()
-        self.db.refresh(incident)
+        try:
+            self.db.add(incident)
+            self.db.commit()
+            self.db.refresh(incident)
 
-        return incident
+            return incident
+
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
 
     def get_by_id(self, incident_id: str) -> IncidentModel | None:
         statement = select(IncidentModel).where(
@@ -35,9 +41,14 @@ class IncidentRepository:
         incident: IncidentModel,
         status: str,
     ) -> IncidentModel:
-        incident.status = status
+        try:
+            incident.status = status
 
-        self.db.commit()
-        self.db.refresh(incident)
+            self.db.commit()
+            self.db.refresh(incident)
 
-        return incident
+            return incident
+
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
