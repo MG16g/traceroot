@@ -1,0 +1,50 @@
+[
+  {
+    "timestamp": "2026-09-18T14:04:12Z",
+    "service": "inventory-service",
+    "level": "WARN",
+    "message": "Inventory lookup latency exceeded 350ms"
+  },
+  {
+    "timestamp": "2026-09-18T14:07:05Z",
+    "service": "payment-service",
+    "level": "INFO",
+    "message": "Payment service version 2.4.0 started successfully"
+  },
+  {
+    "timestamp": "2026-09-18T14:08:41Z",
+    "service": "payment-service",
+    "level": "WARN",
+    "message": "Database query latency exceeded 500ms"
+  },
+  {
+    "timestamp": "2026-09-18T14:10:18Z",
+    "service": "payment-service",
+    "level": "WARN",
+    "message": "Database connection acquisition latency increasing"
+  },
+  {
+    "timestamp": "2026-09-18T14:11:43Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "DBConnectionPoolExhausted: unable to acquire database connection"
+  },
+  {
+    "timestamp": "2026-09-18T14:11:48Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "Payment transaction failed due to database connection timeout"
+  },
+  {
+    "timestamp": "2026-09-18T14:12:04Z",
+    "service": "checkout-service",
+    "level": "ERROR",
+    "message": "Payment authorization failed for checkout request"
+  },
+  {
+    "timestamp": "2026-09-18T14:13:20Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "DBConnectionPoolExhausted: connection pool reached maximum capacity"
+  }
+]

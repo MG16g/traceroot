@@ -1,0 +1,51 @@
+[
+  {
+    "timestamp": "2026-09-19T10:14:00Z",
+    "service": "inventory-service",
+    "metric": "reservation_error_rate",
+    "value": 1.2,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-19T10:17:00Z",
+    "service": "inventory-service",
+    "metric": "reservation_error_rate",
+    "value": 4.8,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-19T10:19:00Z",
+    "service": "inventory-service",
+    "metric": "reservation_error_rate",
+    "value": 16.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-19T10:21:00Z",
+    "service": "inventory-service",
+    "metric": "reservation_error_rate",
+    "value": 34.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-19T10:23:00Z",
+    "service": "inventory-service",
+    "metric": "reservation_error_rate",
+    "value": 49.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-19T10:21:00Z",
+    "service": "inventory-service",
+    "metric": "reservation_retry_rate",
+    "value": 41.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-19T10:23:00Z",
+    "service": "checkout-service",
+    "metric": "checkout_error_rate",
+    "value": 23.0,
+    "unit": "percent"
+  }
+]

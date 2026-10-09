@@ -8,8 +8,8 @@ from app.tools.exceptions import (
 )
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DATA_DIR = PROJECT_ROOT / "data"
+BACKEND_ROOT = Path(__file__).resolve().parents[3]
+DATA_DIR = BACKEND_ROOT / "data"
 
 
 def load_telemetry(

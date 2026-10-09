@@ -1,0 +1,16 @@
+[
+  {
+    "deployment_id": "DEP-3001",
+    "service": "checkout-service",
+    "version": "5.2.1",
+    "timestamp": "2026-09-20T12:00:00Z",
+    "status": "success"
+  },
+  {
+    "deployment_id": "DEP-3002",
+    "service": "payment-service",
+    "version": "2.4.0",
+    "timestamp": "2026-09-20T11:30:00Z",
+    "status": "success"
+  }
+]

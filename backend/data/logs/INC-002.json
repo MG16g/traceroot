@@ -1,0 +1,50 @@
+[
+  {
+    "timestamp": "2026-09-19T10:14:20Z",
+    "service": "inventory-service",
+    "level": "INFO",
+    "message": "Inventory reservation processing operating normally"
+  },
+  {
+    "timestamp": "2026-09-19T10:16:05Z",
+    "service": "inventory-service",
+    "level": "INFO",
+    "message": "Inventory service version 3.9.0 started successfully"
+  },
+  {
+    "timestamp": "2026-09-19T10:18:42Z",
+    "service": "inventory-service",
+    "level": "WARN",
+    "message": "Inventory reservation conflict rate increasing"
+  },
+  {
+    "timestamp": "2026-09-19T10:20:11Z",
+    "service": "inventory-service",
+    "level": "WARN",
+    "message": "Reservation retries exceeded expected threshold"
+  },
+  {
+    "timestamp": "2026-09-19T10:21:36Z",
+    "service": "inventory-service",
+    "level": "ERROR",
+    "message": "InventoryReservationConflict: unable to reserve requested stock"
+  },
+  {
+    "timestamp": "2026-09-19T10:22:14Z",
+    "service": "inventory-service",
+    "level": "ERROR",
+    "message": "Inventory reservation failed after maximum retry attempts"
+  },
+  {
+    "timestamp": "2026-09-19T10:22:48Z",
+    "service": "checkout-service",
+    "level": "ERROR",
+    "message": "Checkout request failed because inventory reservation was rejected"
+  },
+  {
+    "timestamp": "2026-09-19T10:24:03Z",
+    "service": "inventory-service",
+    "level": "ERROR",
+    "message": "InventoryReservationConflict: reservation contention remains elevated"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "timestamp": "2026-09-20T16:30:14Z",
+    "service": "checkout-service",
+    "level": "INFO",
+    "message": "Checkout API request processing operating normally"
+  },
+  {
+    "timestamp": "2026-09-20T16:34:22Z",
+    "service": "payment-service",
+    "level": "WARN",
+    "message": "Payment authorization latency exceeded 700ms"
+  },
+  {
+    "timestamp": "2026-09-20T16:36:08Z",
+    "service": "checkout-service",
+    "level": "WARN",
+    "message": "Payment authorization dependency response time increasing"
+  },
+  {
+    "timestamp": "2026-09-20T16:38:41Z",
+    "service": "payment-service",
+    "level": "WARN",
+    "message": "Payment authorization latency exceeded 1200ms"
+  },
+  {
+    "timestamp": "2026-09-20T16:40:17Z",
+    "service": "checkout-service",
+    "level": "WARN",
+    "message": "Checkout request latency exceeded 1500ms"
+  },
+  {
+    "timestamp": "2026-09-20T16:41:52Z",
+    "service": "checkout-service",
+    "level": "ERROR",
+    "message": "Payment authorization dependency timed out during checkout"
+  },
+  {
+    "timestamp": "2026-09-20T16:43:09Z",
+    "service": "checkout-service",
+    "level": "ERROR",
+    "message": "Checkout request exceeded API response timeout"
+  },
+  {
+    "timestamp": "2026-09-20T16:44:31Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "Payment authorization requests experiencing elevated latency"
+  }
+]

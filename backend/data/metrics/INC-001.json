@@ -1,0 +1,51 @@
+[
+  {
+    "timestamp": "2026-09-18T14:00:00Z",
+    "service": "payment-service",
+    "metric": "db_connection_utilization",
+    "value": 42.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-18T14:05:00Z",
+    "service": "payment-service",
+    "metric": "db_connection_utilization",
+    "value": 51.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-18T14:08:00Z",
+    "service": "payment-service",
+    "metric": "db_connection_utilization",
+    "value": 67.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-18T14:10:00Z",
+    "service": "payment-service",
+    "metric": "db_connection_utilization",
+    "value": 81.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-18T14:12:00Z",
+    "service": "payment-service",
+    "metric": "db_connection_utilization",
+    "value": 98.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-18T14:12:00Z",
+    "service": "payment-service",
+    "metric": "payment_error_rate",
+    "value": 37.0,
+    "unit": "percent"
+  },
+  {
+    "timestamp": "2026-09-18T14:12:00Z",
+    "service": "inventory-service",
+    "metric": "request_latency_p95",
+    "value": 410.0,
+    "unit": "milliseconds"
+  }
+]
