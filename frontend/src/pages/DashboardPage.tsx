@@ -184,25 +184,25 @@ function DashboardPage() {
   const overviewStats = [
     {
       label: 'Active Incidents',
-      value: stats.activeIncidents ?? '—',
+      value: stats.activeIncidents ?? '--',
       detail: 'Open or investigating',
       tone: 'warning' as const,
     },
     {
       label: 'Critical Incidents',
-      value: stats.criticalIncidents ?? '—',
+      value: stats.criticalIncidents ?? '--',
       detail: 'Unresolved critical incidents',
       tone: 'critical' as const,
     },
     {
       label: 'Investigations',
-      value: stats.investigations ?? '—',
+      value: stats.investigations ?? '--',
       detail: 'Persisted investigation records',
       tone: 'default' as const,
     },
     {
       label: 'Supported RCAs',
-      value: stats.supportedRCAs ?? '—',
+      value: stats.supportedRCAs ?? '--',
       detail: 'Evidence-supported root causes',
       tone: 'success' as const,
     },
@@ -232,6 +232,21 @@ function DashboardPage() {
             <p role="alert" className="dashboard-stats-error">
               {error}
             </p>
+          )}
+
+          {loading && (
+            <div
+              className="dashboard-loading-status"
+              role="status"
+              aria-live="polite"
+            >
+              <span
+                className="dashboard-loading-spinner"
+                aria-hidden="true"
+              />
+
+              <span>Loading operational statistics...</span>
+            </div>
           )}
 
           <div className="stats-grid" aria-busy={loading}>

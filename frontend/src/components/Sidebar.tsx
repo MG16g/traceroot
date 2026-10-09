@@ -77,7 +77,11 @@ function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-brand">
         <div className="brand-mark" aria-hidden="true">
-          TR
+          <img
+            src="/traceroot-logo.png"
+            alt=""
+            className="brand-logo-image"
+          />
         </div>
 
         <div>
