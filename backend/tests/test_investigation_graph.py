@@ -449,3 +449,89 @@ class FakeLLM:
     def invoke(self, prompt):
         return FakeReportResponse()
 
+
+import pytest
+
+from app.orchestration.investigation_graph import (
+    execute_action,
+    route_after_action,
+)
+
+
+def test_failed_telemetry_action_is_recorded():
+    incident = create_test_incident()
+
+    decision = InvestigationDecision(
+        action=InvestigationAction.SEARCH_LOGS,
+        reason="Inspect payment failures",
+        parameters={},
+    )
+
+    state = InvestigationState(
+        incident=incident,
+        current_decision=decision,
+    )
+
+    with patch(
+        "app.orchestration.investigation_graph.search_logs",
+        side_effect=RuntimeError("Telemetry unavailable"),
+    ) as mock_logs, patch(
+        "app.orchestration.investigation_graph.logger.exception",
+    ) as mock_logger:
+        result = execute_action(state)
+
+    mock_logs.assert_called_once_with(
+        incident_id="INC-001",
+    )
+
+    mock_logger.assert_called_once()
+
+    assert result["current_step"] == "tool_error"
+    assert result["error"] == "Telemetry unavailable"
+    assert result["executed_actions"] == ["search_logs|"]
+
+    assert len(result["investigation_notes"]) == 1
+    assert "Telemetry unavailable" in (
+        result["investigation_notes"][0]
+    )
+
+
+def test_tool_error_routes_to_planner():
+    state = InvestigationState(
+        incident=create_test_incident(),
+        current_step="tool_error",
+    )
+
+    assert route_after_action(state) == "plan_next_action"
+
+
+def test_no_results_routes_to_planner():
+    state = InvestigationState(
+        incident=create_test_incident(),
+        current_step="no_results",
+    )
+
+    assert route_after_action(state) == "plan_next_action"
+
+
+def test_evidence_collected_routes_to_hypothesis():
+    state = InvestigationState(
+        incident=create_test_incident(),
+        current_step="evidence_collected",
+    )
+
+    assert route_after_action(state) == "update_hypothesis"
+
+
+def test_unexpected_tool_step_raises_error():
+    state = InvestigationState(
+        incident=create_test_incident(),
+        current_step="unexpected_step",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Unexpected investigation step",
+    ):
+        route_after_action(state)
+

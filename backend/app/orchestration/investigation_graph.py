@@ -2,6 +2,10 @@ from uuid import uuid4
 
 from langgraph.graph import StateGraph, START, END
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from app.llm.provider import get_llm
 
 from app.schemas.evidence import (
@@ -420,9 +424,32 @@ def execute_action(
             )
 
     except Exception as exc:
+        action_fingerprint = build_action_fingerprint(
+            decision
+        )
+
+        logger.exception(
+            "TraceRoot telemetry action failed: "
+            "incident=%s action=%s parameters=%s",
+            incident_id,
+            decision.action.value,
+            parameters,
+        )
+
         return {
             "current_step": "tool_error",
             "error": str(exc),
+            "executed_actions": (
+                state.executed_actions
+                + [action_fingerprint]
+            ),
+            "investigation_notes": (
+                state.investigation_notes
+                + [
+                    f"Telemetry action failed: "
+                    f"{action_fingerprint}: {exc}"
+                ]
+            ),
         }
 
     new_evidence = tool_results_to_evidence(
@@ -891,10 +918,19 @@ Rules:
 def route_after_action(
     state: InvestigationState,
 ) -> str:
-    if state.current_step == "no_results":
+    if state.current_step in {
+        "no_results",
+        "tool_error",
+    }:
         return "plan_next_action"
 
-    return "update_hypothesis"
+    if state.current_step == "evidence_collected":
+        return "update_hypothesis"
+
+    raise ValueError(
+        "Unexpected investigation step after tool execution: "
+        f"{state.current_step}"
+    )
 
 
 def format_investigation_notes(
