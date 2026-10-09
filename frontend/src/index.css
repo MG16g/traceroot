@@ -6789,3 +6789,12 @@ button:disabled {
   height: 100%;
   object-fit: contain;
 }
+
+
+/* Day 19 — Investigation Status Accuracy */
+
+.history-run-pending {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}

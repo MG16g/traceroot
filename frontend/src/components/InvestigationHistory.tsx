@@ -146,9 +146,10 @@ function InvestigationHistory({
                   item.root_cause_confidence,
                 )
 
-              const successful =
-                item.status.toLowerCase() !==
-                'failed'
+              const normalizedStatus = item.status.toLowerCase()
+
+              const successful = normalizedStatus === 'completed'
+              const failed = normalizedStatus === 'failed'
 
               return (
                 <article
@@ -194,7 +195,9 @@ function InvestigationHistory({
                         className={`history-run-status ${
                           successful
                             ? 'history-run-success'
-                            : 'history-run-failed'
+                            : failed
+                              ? 'history-run-failed'
+                              : 'history-run-pending'
                         }`}
                       >
                         {item.status}
