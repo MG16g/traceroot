@@ -652,6 +652,24 @@ the hypothesis.
 Contradicting evidence should contain evidence that weakens
 or challenges the hypothesis.
 
+Before selecting evidence references, critically evaluate
+the proposed hypothesis against every available evidence record.
+
+Identify observations that:
+- Directly conflict with the proposed explanation.
+- Suggest a competing root cause.
+- Show the suspected component was healthy during the failure.
+- Weaken the proposed causal relationship.
+
+Do not classify evidence as supporting merely because it
+mentions the affected service or occurred near the incident.
+
+Only include genuine contradictions supported by the supplied
+evidence. Never fabricate or invent contradictory evidence.
+
+If no supplied evidence contradicts the hypothesis, return
+an empty contradicting_evidence list.
+
 Confidence must be between 0 and 1.
 
 Do not generate IDs or incident metadata.

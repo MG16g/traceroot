@@ -196,15 +196,14 @@ def evaluate_hypothesis(
         for evidence in supporting_objects
     })
 
-    if confidence >= 0.70:
-        status = RootCauseStatus.SUPPORTED
-
-    elif (
+    if (
         contradicting_objects
-        and len(contradicting_objects)
-        >= len(supporting_objects)
+        and len(contradicting_objects) >= len(supporting_objects)
     ):
         status = RootCauseStatus.REJECTED
+
+    elif confidence >= 0.70:
+        status = RootCauseStatus.SUPPORTED
 
     else:
         status = RootCauseStatus.INVESTIGATING

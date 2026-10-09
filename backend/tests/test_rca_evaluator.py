@@ -253,3 +253,63 @@ def test_evaluate_hypothesis_can_reject_candidate():
         candidate.status
         == RootCauseStatus.REJECTED
     )
+
+
+
+
+from unittest.mock import patch
+
+from app.services.rca_evaluator import evaluate_hypothesis
+from app.schemas.root_cause import RootCauseStatus
+
+
+def test_contradictions_take_priority_over_high_confidence():
+    """
+    A hypothesis must be rejected when contradictions
+    equal supporting evidence, even if the confidence
+    calculator returns a high score.
+    """
+
+    from unittest.mock import MagicMock
+
+    hypothesis = MagicMock()
+    hypothesis.id = "HYP-001"
+    hypothesis.incident_id = "INC-001"
+    hypothesis.description = "Database connection pool exhaustion"
+    hypothesis.supporting_evidence = [
+        "Evidence #1",
+        "Evidence #2",
+        "Evidence #3",
+    ]
+    hypothesis.contradicting_evidence = [
+        "Evidence #4",
+        "Evidence #5",
+        "Evidence #6",
+    ]
+
+    from app.schemas.evidence import Evidence, EvidenceSourceType
+
+    evidence_items = [
+        Evidence(
+            id=f"EV-{i}",
+            incident_id="INC-001",
+            source_type=EvidenceSourceType.LOG,
+            service="payment-service",
+            content=f"Test evidence {i}",
+            relevance_score=1.0,
+        )
+        for i in range(1, 7)
+    ]
+
+    with patch(
+        "app.services.rca_evaluator.calculate_confidence",
+        return_value=0.90,
+    ):
+        result = evaluate_hypothesis(
+            hypothesis=hypothesis,
+            evidence_items=evidence_items,
+        )
+
+    assert result.status == RootCauseStatus.REJECTED
+    assert len(result.supporting_evidence) == 3
+    assert len(result.contradicting_evidence) == 3
