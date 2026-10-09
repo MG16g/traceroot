@@ -27,8 +27,11 @@ def search_logs(
                 continue
 
         if query is not None:
-            if query.lower() not in log["message"].lower():
-                continue
+            normalized_query = query.strip().lower()
+
+            if normalized_query not in {"", "*"}:
+                if normalized_query not in log["message"].lower():
+                    continue
 
         results.append(log)
 
