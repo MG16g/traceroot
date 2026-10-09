@@ -13,6 +13,7 @@ from app.schemas.investigation import (
     InvestigationAction,
     InvestigationDecision,
     InvestigationState,
+    InvestigationStatus,
 )
 
 from app.schemas.hypothesis import (
@@ -317,6 +318,21 @@ Only use parameters listed for the selected action.
         prompt
     )
 
+    # Prevent the investigation from stopping before
+    # attempting any telemetry collection.
+    if (
+        decision.action == InvestigationAction.STOP
+        and not state.executed_actions
+    ):
+        decision = InvestigationDecision(
+            action=InvestigationAction.SEARCH_LOGS,
+            reason=(
+                "Collect initial log evidence before "
+                "allowing investigation termination."
+            ),
+            parameters={},
+        )
+
     return {
         "current_decision": decision,
         "current_step": "action_selected",
@@ -344,9 +360,7 @@ def route_action(
     if state.iteration >= MAX_ITERATIONS:
         return "stop"
 
-    fingerprint = build_action_fingerprint(
-        decision
-    )
+    fingerprint = build_action_fingerprint(decision)
 
     if fingerprint in state.executed_actions:
         return "duplicate"
@@ -871,6 +885,7 @@ Rules:
     return {
         "final_report": report,
         "current_step": "completed",
+        "status": InvestigationStatus.COMPLETED,
     }
 
 def route_after_action(

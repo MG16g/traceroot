@@ -13,6 +13,7 @@ from app.schemas.investigation import (
     InvestigationAction,
     InvestigationDecision,
     InvestigationState,
+    InvestigationStatus,
 )
 
 from app.schemas.hypothesis import HypothesisProposal
@@ -253,7 +254,7 @@ def test_investigation_graph_runs_iterative_investigation():
     
 
 
-def test_investigation_graph_stops_without_tool_execution():
+def test_investigation_graph_attempts_telemetry_before_stopping():
     incident = create_test_incident()
 
     initial_state = InvestigationState(
@@ -268,26 +269,16 @@ def test_investigation_graph_stops_without_tool_execution():
             )
 
     class StopReportResponse:
-        content = """
-    # Incident Summary
-
-    Investigation stopped before additional evidence
-    was collected.
-
-    # Investigation Findings
-
-    No additional investigation evidence was collected.
-
-    # Root Cause Hypothesis
-
-    No evidence-backed root cause hypothesis is available.
-
-    # Recommended Next Steps
-
-    Collect additional telemetry before making
-    a root cause determination.
-    """
-
+        content = (
+            "# Incident Summary\n"
+            "Initial telemetry was checked.\n\n"
+            "# Investigation Findings\n"
+            "No matching telemetry records were returned.\n\n"
+            "# Root Cause Hypothesis\n"
+            "No evidence-backed root cause is available.\n\n"
+            "# Recommended Next Steps\n"
+            "Investigate additional telemetry sources."
+        )
 
     class StopLLM:
         def with_structured_output(self, schema, **kwargs):
@@ -303,6 +294,7 @@ def test_investigation_graph_stops_without_tool_execution():
         return_value=StopLLM(),
     ), patch(
         "app.orchestration.investigation_graph.search_logs",
+        return_value=[],
     ) as mock_logs, patch(
         "app.orchestration.investigation_graph.query_metrics",
     ) as mock_metrics, patch(
@@ -311,32 +303,40 @@ def test_investigation_graph_stops_without_tool_execution():
 
         result = graph.invoke(initial_state)
 
-    assert result["iteration"] == 1
-
-    assert (
-        result["current_decision"].action
-        == InvestigationAction.STOP
+    # Initial STOP must be overridden by a telemetry action.
+    mock_logs.assert_called_once_with(
+        incident_id=incident.id,
     )
 
-    assert result["evidence"] == []
-
-    assert result["hypotheses"] == []
-
-    assert result["current_step"] == "completed"
-
-    assert result["final_report"] is not None
-
-    assert (
-        "No evidence-backed root cause hypothesis"
-        in result["final_report"]
-    )
-
-    mock_logs.assert_not_called()
+    # Other telemetry tools should not be invoked.
     mock_metrics.assert_not_called()
     mock_deployments.assert_not_called()
 
+    # The planner runs again after the empty log result.
+    assert result["iteration"] == 2
+
+    # The investigation must terminate without looping forever.
+    assert result["current_step"] == "completed"
+
+    # The attempted action must be recorded.
+    assert result["executed_actions"] == [
+        "search_logs|"
+    ]
+
+    # Empty telemetry must not produce fabricated evidence.
+    assert result["evidence"] == []
+    assert result["hypotheses"] == []
+    assert result.get("root_cause_candidate") is None
+
+    # The final report must still be generated.
+    assert result["final_report"] is not None
+
+    # The investigation status must be updated.
+    assert result["status"] == InvestigationStatus.COMPLETED
+
     
 
+    
 class SequentialDecisionLLM:
     def __init__(self):
         self.call_count = 0
