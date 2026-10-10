@@ -13,6 +13,17 @@ from app.tools.telemetry_loader import (
     load_telemetry,
 )
 
+from fastapi import Depends, status
+from sqlalchemy.orm import Session
+
+from app.core.dependencies import get_db
+from app.core.telemetry_auth import require_telemetry_api_key
+from app.repositories.telemetry_repository import TelemetryRepository
+from app.schemas.telemetry_ingest import (
+    TelemetryIngestRequest,
+    TelemetryIngestResponse,
+)
+
 
 router = APIRouter(
     prefix="/api/telemetry",
@@ -99,3 +110,35 @@ def get_incident_telemetry(
         "metrics": metrics,
         "deployments": deployments,
     }
+
+
+@router.post(
+    "/ingest",
+    response_model=TelemetryIngestResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_telemetry_api_key)],
+)
+def ingest_telemetry(
+    event: TelemetryIngestRequest,
+    db: Session = Depends(get_db),
+) -> TelemetryIngestResponse:
+    """
+    Accept authenticated telemetry events and persist them
+    to PostgreSQL.
+    """
+    try:
+        repository = TelemetryRepository(db)
+        saved_event = repository.create(event)
+
+        event_id = saved_event.id
+
+        db.commit()
+
+        return TelemetryIngestResponse(
+            event_id=event_id,
+            status="accepted",
+        )
+
+    except Exception:
+        db.rollback()
+        raise

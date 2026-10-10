@@ -5,6 +5,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     database_url: str
 
+    telemetry_api_key: str | None = Field(
+        default=None,
+        validation_alias="TRACEROOT_TELEMETRY_API_KEY",
+    )
+
     app_env: str = "development"
 
     debug: bool = False
