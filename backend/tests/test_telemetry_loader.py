@@ -15,7 +15,17 @@ def test_load_logs_for_existing_incident():
     assert logs[0]["service"]
 
 
-def test_missing_telemetry_raises_error():
+def test_missing_telemetry_raises_error(monkeypatch):
+    import app.tools.telemetry_loader as loader
+
+    # Simulate an incident with no live telemetry.
+    # This keeps the test independent of PostgreSQL.
+    monkeypatch.setattr(
+        loader,
+        "load_live_telemetry",
+        lambda db, source, incident_id: None,
+    )
+
     with pytest.raises(TelemetryNotFoundError):
         load_telemetry(
             source="logs",

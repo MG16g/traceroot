@@ -4,6 +4,8 @@ from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.evidence import EvidenceModel
+from app.models.hypothesis import HypothesisModel
 
 
 class IncidentModel(Base):
@@ -28,6 +30,11 @@ class IncidentModel(Base):
         String(100),
         nullable=False,
         index=True,
+    )
+
+    fingerprint: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
     )
 
     severity: Mapped[str] = mapped_column(

@@ -2,6 +2,8 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from app.services.automatic_incident_service import process_telemetry_incident
+
 from app.tools.exceptions import (
     TelemetryNotFoundError,
     TelemetryParseError,
@@ -118,20 +120,26 @@ def get_incident_telemetry(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_telemetry_api_key)],
 )
+
 def ingest_telemetry(
     event: TelemetryIngestRequest,
     db: Session = Depends(get_db),
 ) -> TelemetryIngestResponse:
     """
-    Accept authenticated telemetry events and persist them
-    to PostgreSQL.
+    Persist authenticated telemetry and automatically
+    detect incidents within the same transaction.
     """
     try:
         repository = TelemetryRepository(db)
-        saved_event = repository.create(event)
 
+        saved_event = repository.create(event)
         event_id = saved_event.id
 
+        # Detect and create/reuse an incident when applicable.
+        # This service does not commit independently.
+        process_telemetry_incident(db, event)
+
+        # Commit telemetry and incident changes together.
         db.commit()
 
         return TelemetryIngestResponse(
