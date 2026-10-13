@@ -48,6 +48,7 @@ async def send_telemetry(
     try:
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(3.0),
+            trust_env=False,
         ) as client:
             response = await client.post(
                 TRACEROOT_INGEST_URL,
@@ -58,6 +59,13 @@ async def send_telemetry(
                     ),
                 },
             )
+
+            if response.is_error:
+                logger.warning(
+                    "Telemetry rejected: HTTP %s - %s",
+                    response.status_code,
+                    response.text[:1000],
+                )
 
             response.raise_for_status()
 
